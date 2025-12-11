@@ -1,2 +1,16 @@
-# OpenSyncParty
-OpenSyncParty brings real-time watch-party syncing to Jellyfin and local players through a lightweight, extensible open-source protocol.
+# OpenSyncParty — Synchronized Watch Parties for Jellyfin and Local Players
+
+OpenSyncParty is an open-source synchronization layer designed to bring real-time watch-party functionality to Jellyfin and other local media players. It provides a lightweight, latency-aware coordinator that keeps multiple viewers perfectly in sync, regardless of their device or player.
+
+The system operates through a small server component and client-side adapters, making it compatible with popular players such as VLC, MPV, or Jellyfin Web. Its modular architecture allows easy integration, community-driven extensions, and long-term maintainability.
+
+## Key Features
+
+* Real-time synchronization of play, pause, seek, and playback position
+* Works with Jellyfin libraries, hosted locally or via Cloudflare tunnels
+* Open client protocol for MPV, VLC, or browser-based players
+* Group session management with rooms, permissions, and chat API
+* Designed for WAN environments with jitter-tolerant syncing
+* Fully open-source and easily extensible
+
+OpenSyncParty aims to fill the gap left by missing native watch-party support in Jellyfin by providing a robust, player-independent, community-driven solution.
