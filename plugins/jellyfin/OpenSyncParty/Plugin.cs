@@ -1,0 +1,22 @@
+using System;
+using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.Plugins;
+using MediaBrowser.Model.Plugins;
+using OpenSyncParty.Plugin.Configuration;
+
+namespace OpenSyncParty.Plugin;
+
+public class Plugin : BasePlugin<PluginConfiguration>
+{
+    public static Plugin? Instance { get; private set; }
+
+    public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
+        : base(applicationPaths, xmlSerializer)
+    {
+        Instance = this;
+    }
+
+    public override string Name => "OpenSyncParty";
+
+    public override Guid Id => new("0f2fd0fd-09ff-4f49-9f1c-4a8f421a4b7d");
+}
