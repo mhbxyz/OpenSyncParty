@@ -1,8 +1,10 @@
 import json
+import os
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
+import jwt
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
@@ -32,6 +34,10 @@ class Room:
 app = FastAPI()
 rooms: Dict[str, Room] = {}
 clients_by_ws: Dict[WebSocket, ClientInfo] = {}
+JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "").strip()
+JWT_ISSUER = os.getenv("JWT_ISSUER", "").strip()
+INVITE_TTL_SECONDS = int(os.getenv("INVITE_TTL_SECONDS", "3600"))
 
 
 @app.get("/health")
@@ -54,6 +60,66 @@ def stamp_server_ts(message: dict) -> dict:
     stamped = dict(message)
     stamped["server_ts"] = now_ms()
     return stamped
+
+
+def verify_jwt(token: str) -> Tuple[bool, Optional[dict], Optional[str]]:
+    if not JWT_SECRET:
+        return True, {}, None
+    try:
+        options = {"require": ["exp"]}
+        kwargs = {"algorithms": ["HS256"], "options": options}
+        if JWT_AUDIENCE:
+            kwargs["audience"] = JWT_AUDIENCE
+        if JWT_ISSUER:
+            kwargs["issuer"] = JWT_ISSUER
+        payload = jwt.decode(token, JWT_SECRET, **kwargs)
+        return True, payload, None
+    except jwt.ExpiredSignatureError:
+        return False, None, "token_expired"
+    except jwt.InvalidTokenError:
+        return False, None, "token_invalid"
+
+
+def require_auth(payload: dict) -> Tuple[bool, Optional[dict], Optional[str]]:
+    if not JWT_SECRET:
+        return True, {}, None
+    token = payload.get("auth_token")
+    if not token:
+        return False, None, "auth_required"
+    return verify_jwt(token)
+
+
+def verify_invite(payload: dict, room_id: str) -> Tuple[bool, Optional[dict], Optional[str]]:
+    if not JWT_SECRET:
+        return True, {}, None
+    invite_token = payload.get("invite_token")
+    if not invite_token:
+        return False, None, "invite_required"
+    ok, claims, err = verify_jwt(invite_token)
+    if not ok or not claims:
+        return False, None, err
+    if claims.get("type") != "invite":
+        return False, None, "invite_invalid"
+    if claims.get("room") != room_id:
+        return False, None, "invite_room_mismatch"
+    return True, claims, None
+
+
+def issue_invite(room_id: str, ttl_seconds: Optional[int] = None) -> dict:
+    if not JWT_SECRET:
+        raise ValueError("JWT_SECRET required for invites")
+    exp = int(time.time()) + int(ttl_seconds or INVITE_TTL_SECONDS)
+    payload = {
+        "type": "invite",
+        "room": room_id,
+        "exp": exp,
+    }
+    if JWT_AUDIENCE:
+        payload["aud"] = JWT_AUDIENCE
+    if JWT_ISSUER:
+        payload["iss"] = JWT_ISSUER
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    return {"invite_token": token, "expires_at": exp}
 
 
 async def send_error(ws: WebSocket, code: str, message: str, room: Optional[str], client: Optional[str]) -> None:
@@ -113,6 +179,10 @@ async def handle_create_room(msg: dict, ws: WebSocket) -> None:
     if not room_id or not client_id:
         await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
         return
+    ok, claims, err = require_auth(payload)
+    if not ok:
+        await send_error(ws, err or "auth_failed", "auth required", room_id, client_id)
+        return
     if room_id in rooms:
         await send_error(ws, "room_exists", "room already exists", room_id, client_id)
         return
@@ -127,7 +197,8 @@ async def handle_create_room(msg: dict, ws: WebSocket) -> None:
         "position": float(payload.get("start_pos", 0.0)),
         "play_state": "paused",
     }
-    client_info = ClientInfo(client_id=client_id, name=payload.get("name"), ws=ws, room_id=room_id)
+    client_name = payload.get("name") or (claims or {}).get("username")
+    client_info = ClientInfo(client_id=client_id, name=client_name, ws=ws, room_id=room_id)
     room.clients[client_id] = client_info
     rooms[room_id] = room
     clients_by_ws[ws] = client_info
@@ -151,7 +222,16 @@ async def handle_join_room(msg: dict, ws: WebSocket) -> None:
         await send_error(ws, "room_missing", "room not found", room_id, client_id)
         return
 
-    client_info = ClientInfo(client_id=client_id, name=payload.get("name"), ws=ws, room_id=room_id)
+    ok, claims, err = require_auth(payload)
+    if not ok:
+        ok_invite, invite_claims, invite_err = verify_invite(payload, room_id)
+        if not ok_invite:
+            await send_error(ws, invite_err or err or "auth_failed", "auth or invite required", room_id, client_id)
+            return
+        claims = invite_claims
+
+    client_name = payload.get("name") or (claims or {}).get("username")
+    client_info = ClientInfo(client_id=client_id, name=client_name, ws=ws, room_id=room_id)
     room.clients[client_id] = client_info
     clients_by_ws[ws] = client_info
 
@@ -229,6 +309,28 @@ async def handle_force_resync(msg: dict, ws: WebSocket) -> None:
     await broadcast(room, stamp_server_ts(msg), exclude_client=None)
 
 
+async def handle_create_invite(msg: dict, ws: WebSocket) -> None:
+    room_id = msg.get("room")
+    client_id = msg.get("client")
+    payload = msg.get("payload") or {}
+    if not room_id or not client_id:
+        await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
+        return
+    room = rooms.get(room_id)
+    if not room:
+        await send_error(ws, "room_missing", "room not found", room_id, client_id)
+        return
+    if client_id != room.host_id:
+        await send_error(ws, "not_host", "only host can create invite", room_id, client_id)
+        return
+    if not JWT_SECRET:
+        await send_error(ws, "invite_disabled", "JWT_SECRET required", room_id, client_id)
+        return
+    ttl_seconds = payload.get("expires_in")
+    invite = issue_invite(room_id, ttl_seconds)
+    await ws.send_json(make_message("invite_created", room_id, client_id, invite))
+
+
 async def handle_ping(msg: dict, ws: WebSocket) -> None:
     payload = msg.get("payload") or {}
     await ws.send_json(
@@ -248,6 +350,8 @@ async def handle_message(msg: dict, ws: WebSocket) -> None:
         await handle_state_update(msg, ws)
     elif msg_type == "force_resync":
         await handle_force_resync(msg, ws)
+    elif msg_type == "create_invite":
+        await handle_create_invite(msg, ws)
     elif msg_type == "ping":
         await handle_ping(msg, ws)
     else:

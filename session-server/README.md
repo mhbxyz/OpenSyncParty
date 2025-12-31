@@ -41,3 +41,17 @@ docker compose up --build session-server
 ## Notes
 
 MVP implementation uses FastAPI with in-memory room state (no Redis yet).
+
+## JWT Auth (M2)
+
+If `JWT_SECRET` is set, clients must provide `auth_token` for `create_room`. For
+`join_room`, either `auth_token` or `invite_token` is required.
+
+Hosts can request an invite token via the `create_invite` message.
+
+Environment variables:
+
+- `JWT_SECRET` (required to enable auth/invites)
+- `JWT_AUDIENCE` (optional)
+- `JWT_ISSUER` (optional)
+- `INVITE_TTL_SECONDS` (default 3600)

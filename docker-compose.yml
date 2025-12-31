@@ -8,6 +8,11 @@ services:
     command: bash -lc "pip install uv && uv sync --group server && .venv/bin/python session-server/app.py"
     ports:
       - "8999:8999"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-}
+      - JWT_ISSUER=${JWT_ISSUER:-}
+      - INVITE_TTL_SECONDS=${INVITE_TTL_SECONDS:-3600}
   web-demo:
     image: python:3.11-slim
     working_dir: /workspace
@@ -24,3 +29,5 @@ services:
     command: bash -lc "pip install uv && uv sync --group tests && .venv/bin/python tests/protocol_harness.py --ws ws://session-server:8999/ws"
     depends_on:
       - session-server
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-}
