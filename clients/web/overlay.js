@@ -255,7 +255,10 @@
   };
 
   const createInvite = () => {
-    sendMessage("create_invite", { expires_in: 3600 });
+    sendMessage("create_invite", {
+      expires_in: 3600,
+      auth_token: byId("osp-auth").value.trim() || undefined,
+    });
   };
 
   const createUI = () => {
