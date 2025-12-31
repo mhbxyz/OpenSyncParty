@@ -42,11 +42,11 @@ demo: venv
 
 mpv-host: sync-mpv
 	@if [ -z "$(ROOM)" ]; then echo "ROOM is required (e.g. make mpv-host ROOM=my-room)"; exit 1; fi
-	$(PY) clients/mpv/opensyncparty.py --room $(ROOM) --host
+	$(PY) clients/mpv/opensyncparty.py --room $(ROOM) --host $(ARGS)
 
 mpv-join: sync-mpv
 	@if [ -z "$(ROOM)" ]; then echo "ROOM is required (e.g. make mpv-join ROOM=my-room)"; exit 1; fi
-	$(PY) clients/mpv/opensyncparty.py --room $(ROOM)
+	$(PY) clients/mpv/opensyncparty.py --room $(ROOM) $(ARGS)
 
 test-harness: sync-tests
 	$(PY) tests/protocol_harness.py --ws ws://localhost:8999/ws
