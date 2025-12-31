@@ -2,7 +2,7 @@ UV ?= uv
 VENV ?= .venv
 PY := $(VENV)/bin/python
 
-.PHONY: help venv sync-server sync-mpv sync-tests sync-all server demo mpv-host mpv-join test-harness \
+.PHONY: help venv sync-server sync-mpv sync-tests sync-all server demo mpv-host mpv-join test-harness test \
 	compose-up compose-down compose-server compose-demo compose-harness
 
 help:
@@ -12,6 +12,7 @@ help:
 	@echo "  make mpv-host      - run MPV adapter as host (ROOM=...)"
 	@echo "  make mpv-join      - run MPV adapter as joiner (ROOM=...)"
 	@echo "  make test-harness  - run protocol harness"
+	@echo "  make test          - run pytest suite"
 	@echo "  make compose-up    - start docker compose services"
 	@echo "  make compose-down  - stop docker compose services"
 	@echo "  make compose-demo  - start web demo service"
@@ -50,6 +51,9 @@ mpv-join: sync-mpv
 
 test-harness: sync-tests
 	$(PY) tests/protocol_harness.py --ws ws://localhost:8999/ws
+
+test: sync-tests
+	$(PY) -m pytest tests
 
 compose-up:
 	docker compose up --build
