@@ -1,0 +1,24 @@
+[project]
+name = "opensyncparty"
+version = "0.1.0"
+description = "OpenSyncParty: synchronized watch parties for Jellyfin and local players."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+server = [
+  "fastapi==0.111.0",
+  "uvicorn==0.30.1",
+]
+mpv = [
+  "websockets==12.0",
+]
+tests = [
+  "websockets==12.0",
+]
+all = [
+  "fastapi==0.111.0",
+  "uvicorn==0.30.1",
+  "websockets==12.0",
+]
