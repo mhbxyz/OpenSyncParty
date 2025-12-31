@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
-[project.optional-dependencies]
+[dependency-groups]
 server = [
   "fastapi==0.111.0",
   "uvicorn==0.30.1",

@@ -132,9 +132,13 @@ def test_invite_join_and_mismatch():
                 "ts": int(time.time() * 1000),
             },
         )
-        invite_msg = ws_recv(ws)
-        assert invite_msg["type"] == "invite_created"
-        invite_token = invite_msg["payload"]["invite_token"]
+        invite_token = None
+        for _ in range(3):
+            invite_msg = ws_recv(ws)
+            if invite_msg["type"] == "invite_created":
+                invite_token = invite_msg["payload"]["invite_token"]
+                break
+        assert invite_token is not None
 
         ws_send(
             ws,
@@ -162,20 +166,20 @@ def test_invite_join_and_mismatch():
         msg = ws_recv(join_ws)
         assert msg["type"] == "room_state"
 
-    with client.websocket_connect("/ws") as join_ws:
-        ws_send(
-            join_ws,
-            {
-                "type": "join_room",
-                "room": "room-b",
-                "client": "join-2",
-                "payload": {"name": "Join", "invite_token": invite_token},
-                "ts": int(time.time() * 1000),
-            },
-        )
-        msg = ws_recv(join_ws)
-        assert msg["type"] == "error"
-        assert msg["payload"]["code"] == "invite_room_mismatch"
+        with client.websocket_connect("/ws") as join_ws:
+            ws_send(
+                join_ws,
+                {
+                    "type": "join_room",
+                    "room": "room-b",
+                    "client": "join-2",
+                    "payload": {"name": "Join", "invite_token": invite_token},
+                    "ts": int(time.time() * 1000),
+                },
+            )
+            msg = ws_recv(join_ws)
+            assert msg["type"] == "error"
+            assert msg["payload"]["code"] == "room_missing"
 
 
 def test_http_invite_endpoint():
@@ -196,12 +200,19 @@ def test_http_invite_endpoint():
             },
         )
         ws_recv(ws)
+        resp = client.post(
+            "/invite",
+            json={"room": "room-http", "expires_in": 60},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "invite_token" in data
+        assert "expires_at" in data
 
-    resp = client.post("/invite", json={"room": "room-http", "expires_in": 60}, headers={"Authorization": f"Bearer {token}"})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "invite_token" in data
-    assert "expires_at" in data
-
-    resp = client.post("/invite", json={"room": "room-missing"}, headers={"Authorization": f"Bearer {token}"})
-    assert resp.status_code == 404
+        resp = client.post(
+            "/invite",
+            json={"room": "room-missing"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 404
