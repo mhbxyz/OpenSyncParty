@@ -6,6 +6,8 @@ session server over WebSocket.
 If `JWT_SECRET` is configured on the server, `create_room` requires `auth_token`
 and `join_room` requires either `auth_token` or `invite_token`.
 
+For REST-based invites, see `session-server/README.md`.
+
 ## Envelope
 
 ```json

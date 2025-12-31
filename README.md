@@ -28,6 +28,7 @@ OpenSyncParty aims to fill the gap left by missing native watch-party support in
 - JWT auth côté serveur (env `JWT_SECRET`)
 - Invites de room via `create_invite` / `invite_created`
 - Plugin Jellyfin (émission de JWT + invites) dans `plugins/jellyfin`
+- Roles optionnels via `HOST_ROLES` / `INVITE_ROLES`
 
 ## Démarrage rapide (PoC)
 
