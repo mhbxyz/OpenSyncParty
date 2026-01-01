@@ -1,4 +1,8 @@
 .venv/
+# Docker config
+infra/docker/config/
+
+# Python
 __pycache__/
 *.pyc
 

@@ -1,178 +1,84 @@
-# Protocol (Draft)
+# Protocol Specification
 
-This document defines the JSON message protocol used between clients and the
-session server over WebSocket.
+OpenSyncParty uses a JSON-based protocol over WebSocket.
 
-If `JWT_SECRET` is configured on the server, `create_room` requires `auth_token`
-and `join_room` requires either `auth_token` or `invite_token`.
+**Endpoint:** `ws://<server>/OpenSyncParty/ws`
 
-For REST-based invites, see `session-server/README.md`.
+## Message Format
 
-## Envelope
+All messages sent between client and server follow this structure:
 
 ```json
 {
-  "type": "event_type",
+  "type": "message_type",
   "room": "room_id",
   "client": "client_id",
-  "payload": {},
-  "ts": 1733820000,
-  "server_ts": 1733820001
+  "payload": { ... },
+  "ts": 1678900000000,       // Client timestamp (ms)
+  "server_ts": 1678900000100 // Server timestamp (added by server)
 }
 ```
 
-`server_ts` is optional and added by the session server when relaying messages.
+## Message Types
 
-## Events
+### Client -> Server
 
-### create_room
+*   **`create_room`**:
+    *   Payload:
+        *   `media_url` (string): Identifier or URL of the media.
+        *   `start_pos` (number): Initial position in seconds.
+        *   `name` (string): Display name of the host.
+        *   `options` (object): Room options (e.g., `free_play`).
+    *   Response: `room_state`
 
-Payload:
+*   **`join_room`**:
+    *   Payload:
+        *   `name` (string): Display name of the user.
+        *   `auth_token` (string, optional): JWT for authentication.
+        *   `invite_token` (string, optional): Token to join private rooms.
+    *   Response: `room_state` (to joiner), `client_joined` (broadcast), `participants_update` (broadcast)
 
-```json
-{
-  "media_url": "...",
-  "start_pos": 0,
-  "host_id": "...",
-  "options": {},
-  "auth_token": "JWT"
-}
-```
+*   **`player_event`**:
+    *   Payload:
+        *   `action` (string): "play", "pause", or "seek".
+        *   `position` (number): Current playback position in seconds.
+    *   Behavior: Broadcasts the event to all other clients in the room.
 
-### join_room
+*   **`state_update`**:
+    *   Payload:
+        *   `position` (number): Current position.
+        *   `play_state` (string): "playing" or "paused".
+    *   Behavior: Updates server state and broadcasts to others (typically sent periodically by host).
 
-Payload:
+*   **`ping`**:
+    *   Payload: `client_ts` (number).
+    *   Response: `pong`
 
-```json
-{
-  "name": "...",
-  "auth_token": "JWT",
-  "invite_token": "JWT"
-}
-```
+### Server -> Client
 
-### player_event
+*   **`room_state`**:
+    *   Payload: Full details of the room (host ID, media, current state, participants list). Sent on join/create.
 
-Payload:
+*   **`client_joined`**:
+    *   Payload: `name` of the new user.
 
-```json
-{
-  "action": "play|pause|seek",
-  "position": 0.0
-}
-```
+*   **`client_left`**:
+    *   Payload: empty.
 
-### state_update
+*   **`participants_update`**:
+    *   Payload: `participants` (array of objects), `participant_count` (number).
 
-Payload:
+*   **`host_change`**:
+    *   Payload: `host_id` (string).
 
-```json
-{
-  "position": 0.0,
-  "play_state": "playing|paused|buffering",
-  "reported_latency": 0
-}
-```
+*   **`player_event`**:
+    *   Relayed from the host. Contains `action` and `position`.
 
-### room_state
+*   **`state_update`**:
+    *   Relayed from the host. Contains authoritative state.
 
-Payload:
+*   **`pong`**:
+    *   Payload: `client_ts` (echoed back for RTT calculation).
 
-```json
-{
-  "room": "room_id",
-  "host_id": "client_id",
-  "media_url": "...",
-  "options": {},
-  "state": { "position": 0.0, "play_state": "playing|paused|buffering" },
-  "participants": [
-    { "client_id": "client-1", "name": "Alice", "is_host": true }
-  ],
-  "participant_count": 1
-}
-```
-
-### client_joined / client_left
-
-Payload:
-
-```json
-{
-  "name": "..."
-}
-```
-
-### participants_update
-
-Payload:
-
-```json
-{
-  "participants": [
-    { "client_id": "client-1", "name": "Alice", "is_host": true }
-  ],
-  "participant_count": 1
-}
-```
-
-### host_change
-
-Payload:
-
-```json
-{
-  "host_id": "client_id"
-}
-```
-
-### force_resync
-
-Payload:
-
-```json
-{
-  "target_position": 0.0
-}
-```
-
-### ping / pong
-
-Payload:
-
-```json
-{
-  "client_ts": 1733820000
-}
-```
-
-### error
-
-Payload:
-
-```json
-{
-  "code": "...",
-  "message": "..."
-}
-```
-
-### create_invite
-
-Payload:
-
-```json
-{
-  "expires_in": 3600
-}
-```
-
-### invite_created
-
-Payload:
-
-```json
-{
-  "invite_token": "JWT",
-  "expires_at": 1733823600
-}
-```
+*   **`error`**:
+    *   Payload: `code` (string), `message` (string).

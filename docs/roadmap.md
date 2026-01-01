@@ -1,32 +1,32 @@
 # Roadmap
 
-## M1
+## Phase 1: MVP (Completed) ✅
 
-- Protocol spec
-- PoC session server
-- Minimal web client overlay
-- MPV script
+*   [x] Core Jellyfin Plugin (C#)
+*   [x] WebSocket Server implementation within Plugin
+*   [x] Basic Client (Web Overlay)
+*   [x] Play/Pause/Seek synchronization
+*   [x] Room management (Create/Join)
+*   [x] Docker-based development environment
 
-## M2
+## Phase 2: Polish & Security (Current) 🚧
 
-- Jellyfin plugin
-- JWT auth
-- Invite links
+*   [x] Plugin Configuration Page (JWT Secret)
+*   [x] Secure WebSocket (WSS) support
+*   [x] Host migration handling
+*   [x] Auto-reconnect logic
+*   [ ] Persistent Room State (survive server restart)
+*   [ ] Better error handling in UI
 
-## M3
+## Phase 3: Advanced Features 🔮
 
-- Advanced resync (smoothing)
-- Buffering detection
+*   [ ] **Chat System**: Integrated text chat in the overlay.
+*   [ ] **Playback Rate Smoothing**: Instead of hard seeking, adjust playback speed to drift clients back in sync.
+*   [ ] **Shared Playlists**: Allow multiple users to add items to a shared queue.
+*   [ ] **Permissions System**: Granular control over who can pause/seek (Host-only vs Democratic).
+*   [ ] **Mobile Support**: Better UI responsiveness for Jellyfin mobile apps.
 
-## M4
+## Phase 4: Distribution 📦
 
-- QA and metrics
-- Documentation
-- Packaging (Docker)
-- GitHub release
-
-## M5
-
-- VLC integration
-- Mobile client improvements
-- Multi-host modes
+*   [ ] Publish to Jellyfin Plugin Repository
+*   [ ] Automated Release Workflows (GitHub Actions)
