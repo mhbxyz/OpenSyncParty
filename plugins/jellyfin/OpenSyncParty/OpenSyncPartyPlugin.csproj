@@ -40,5 +40,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Web\configPage.html" />
+    <EmbeddedResource Include="Web\plugin.js" />
   </ItemGroup>
 </Project>

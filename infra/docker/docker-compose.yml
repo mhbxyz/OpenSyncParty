@@ -10,6 +10,15 @@ services:
       - ~/Videos/Movies/:/media/Movies:ro
       - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
       - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        if ! grep -q "/OpenSyncParty/ClientScript" /jellyfin/jellyfin-web/index.html; then
+          sed -i 's|</body>|<script src="/OpenSyncParty/ClientScript"></script></body>|' /jellyfin/jellyfin-web/index.html
+          echo "Injected OpenSyncParty script URL into index.html"
+        fi
+        /jellyfin/jellyfin
 
   plugin-builder:
     image: mcr.microsoft.com/dotnet/sdk:9.0

@@ -33,6 +33,18 @@ public class OpenSyncPartyController : ControllerBase
         }
     }
 
+    [HttpGet("ClientScript")]
+    [Produces("text/javascript")]
+    public ActionResult GetClientScript()
+    {
+        var assembly = typeof(OpenSyncPartyController).Assembly;
+        var resourceName = "OpenSyncParty.Plugin.Web.plugin.js";
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return NotFound();
+        using var reader = new StreamReader(stream);
+        return Content(reader.ReadToEnd(), "text/javascript");
+    }
+
     private async Task HandleWebSocket(WebSocket ws)
     {
         var buffer = new byte[1024 * 4];
