@@ -1,4 +1,4 @@
-# Web Client
+# Web Overlay Client
 
 Browser-based client integration (Jellyfin web overlay or fork).
 
@@ -22,7 +22,7 @@ Le JWT peut être émis par le plugin Jellyfin (`/OpenSyncParty/token`).
 
 ## Demo page
 
-Open `clients/web/demo.html` in a local server (or with a simple `python -m http.server`).
+Open `clients/web-overlay/demo.html` in a local server (or with a simple `python -m http.server`).
 The overlay loads automatically and provides a quick room sync test.
 
 Option rapide:
