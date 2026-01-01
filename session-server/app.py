@@ -1,40 +1,23 @@
 import json
 import os
 import time
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+import logging
+from typing import Optional, Tuple
 
 import jwt
 from fastapi import FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from room_manager import RoomManager, now_ms
 
-def now_ms() -> int:
-    return int(time.time() * 1000)
-
-
-@dataclass
-class ClientInfo:
-    client_id: str
-    name: Optional[str]
-    ws: WebSocket
-    room_id: Optional[str] = None
-
-
-@dataclass
-class Room:
-    room_id: str
-    host_id: str
-    media_url: Optional[str]
-    options: dict = field(default_factory=dict)
-    clients: Dict[str, ClientInfo] = field(default_factory=dict)
-    state: dict = field(default_factory=lambda: {"position": 0.0, "play_state": "paused"})
-
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
-rooms: Dict[str, Room] = {}
-clients_by_ws: Dict[WebSocket, ClientInfo] = {}
+manager = RoomManager()
+
 JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
 JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "").strip()
 JWT_ISSUER = os.getenv("JWT_ISSUER", "").strip()
@@ -42,10 +25,13 @@ INVITE_TTL_SECONDS = int(os.getenv("INVITE_TTL_SECONDS", "3600"))
 HOST_ROLES = [role.strip().lower() for role in os.getenv("HOST_ROLES", "").split(",") if role.strip()]
 INVITE_ROLES = [role.strip().lower() for role in os.getenv("INVITE_ROLES", "").split(",") if role.strip()]
 
+if not JWT_SECRET:
+    logger.warning("JWT_SECRET is not set. Authentication is DISABLED. This is insecure for production.")
+
 
 @app.get("/health")
 async def health() -> JSONResponse:
-    return JSONResponse({"status": "ok", "rooms": len(rooms)})
+    return JSONResponse({"status": "ok", "rooms": len(manager.rooms)})
 
 
 def make_message(event_type: str, room: Optional[str], client: Optional[str], payload: dict) -> dict:
@@ -164,7 +150,7 @@ async def create_invite_http(request: InviteRequest, authorization: Optional[str
         raise HTTPException(status_code=401, detail=err or "Invalid token")
     if not require_roles(claims, INVITE_ROLES or HOST_ROLES):
         raise HTTPException(status_code=403, detail="Insufficient role")
-    if request.room not in rooms:
+    if manager.get_room(request.room) is None:
         raise HTTPException(status_code=404, detail="Room not found")
     invite = issue_invite(request.room, request.expires_in)
     return JSONResponse(invite)
@@ -174,55 +160,8 @@ async def send_error(ws: WebSocket, code: str, message: str, room: Optional[str]
     await ws.send_json(make_message("error", room, client, {"code": code, "message": message}))
 
 
-async def broadcast(room: Room, message: dict, exclude_client: Optional[str] = None) -> None:
-    dead = []
-    for client_id, client_info in room.clients.items():
-        if client_id == exclude_client:
-            continue
-        try:
-            await client_info.ws.send_json(message)
-        except Exception:
-            dead.append(client_id)
-    for client_id in dead:
-        room.clients.pop(client_id, None)
-
-
-def room_state_payload(room: Room) -> dict:
-    return {
-        "room": room.room_id,
-        "host_id": room.host_id,
-        "media_url": room.media_url,
-        "options": room.options,
-        "state": room.state,
-        "participants": [
-            {
-                "client_id": client.client_id,
-                "name": client.name,
-                "is_host": client.client_id == room.host_id,
-            }
-            for client in room.clients.values()
-        ],
-        "participant_count": len(room.clients),
-    }
-
-
-def participants_payload(room: Room) -> dict:
-    return {
-        "participants": [
-            {
-                "client_id": client.client_id,
-                "name": client.name,
-                "is_host": client.client_id == room.host_id,
-            }
-            for client in room.clients.values()
-        ],
-        "participant_count": len(room.clients),
-    }
-
-
 async def handle_create_room(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
+    room_id, client_id = msg.get("room"), msg.get("client")
     payload = msg.get("payload") or {}
     if not room_id or not client_id:
         await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
@@ -234,41 +173,30 @@ async def handle_create_room(msg: dict, ws: WebSocket) -> None:
     if claims and not require_roles(claims, HOST_ROLES):
         await send_error(ws, "forbidden", "insufficient role", room_id, client_id)
         return
-    if room_id in rooms:
+    if manager.get_room(room_id):
         await send_error(ws, "room_exists", "room already exists", room_id, client_id)
         return
 
-    room = Room(
+    room = manager.create_room(
         room_id=room_id,
         host_id=client_id,
         media_url=payload.get("media_url"),
         options=payload.get("options", {}),
+        start_pos=float(payload.get("start_pos", 0.0))
     )
-    room.state = {
-        "position": float(payload.get("start_pos", 0.0)),
-        "play_state": "paused",
-    }
     client_name = payload.get("name") or (claims or {}).get("username")
-    client_info = ClientInfo(client_id=client_id, name=client_name, ws=ws, room_id=room_id)
-    room.clients[client_id] = client_info
-    rooms[room_id] = room
-    clients_by_ws[ws] = client_info
-    await ws.send_json(make_message("room_state", room_id, client_id, room_state_payload(room)))
-    await broadcast(
-        room,
-        make_message("participants_update", room_id, client_id, participants_payload(room)),
-        exclude_client=None,
-    )
+    manager.add_client_to_room(room, client_id, client_name, ws)
+    
+    await ws.send_json(make_message("room_state", room_id, client_id, manager.get_room_state_payload(room)))
 
 
 async def handle_join_room(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
+    room_id, client_id = msg.get("room"), msg.get("client")
     payload = msg.get("payload") or {}
     if not room_id or not client_id:
         await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
         return
-    room = rooms.get(room_id)
+    room = manager.get_room(room_id)
     if not room:
         await send_error(ws, "room_missing", "room not found", room_id, client_id)
         return
@@ -282,31 +210,25 @@ async def handle_join_room(msg: dict, ws: WebSocket) -> None:
         claims = invite_claims
 
     client_name = payload.get("name") or (claims or {}).get("username")
-    client_info = ClientInfo(client_id=client_id, name=client_name, ws=ws, room_id=room_id)
-    room.clients[client_id] = client_info
-    clients_by_ws[ws] = client_info
+    manager.add_client_to_room(room, client_id, client_name, ws)
 
-    await ws.send_json(make_message("room_state", room_id, client_id, room_state_payload(room)))
-    await broadcast(
+    await ws.send_json(make_message("room_state", room_id, client_id, manager.get_room_state_payload(room)))
+    await manager.broadcast(
         room,
         make_message("client_joined", room_id, client_id, {"name": payload.get("name")}),
         exclude_client=client_id,
     )
-    await broadcast(
+    await manager.broadcast(
         room,
-        make_message("participants_update", room_id, client_id, participants_payload(room)),
-        exclude_client=None,
+        make_message("participants_update", room_id, client_id, manager.get_participants_payload(room)),
+        exclude_client=client_id,
     )
 
 
 async def handle_player_event(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
+    room_id, client_id = msg.get("room"), msg.get("client")
     payload = msg.get("payload") or {}
-    if not room_id or not client_id:
-        await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
-        return
-    room = rooms.get(room_id)
+    room = manager.get_room(room_id)
     if not room:
         await send_error(ws, "room_missing", "room not found", room_id, client_id)
         return
@@ -321,19 +243,14 @@ async def handle_player_event(msg: dict, ws: WebSocket) -> None:
     if position is not None:
         room.state["position"] = float(position)
 
-    await broadcast(room, stamp_server_ts(msg), exclude_client=None)
+    await manager.broadcast(room, stamp_server_ts(msg))
 
 
 async def handle_state_update(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
+    room_id, client_id = msg.get("room"), msg.get("client")
     payload = msg.get("payload") or {}
-    if not room_id or not client_id:
-        await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
-        return
-    room = rooms.get(room_id)
+    room = manager.get_room(room_id)
     if not room:
-        await send_error(ws, "room_missing", "room not found", room_id, client_id)
         return
     if client_id == room.host_id:
         if "position" in payload:
@@ -341,51 +258,32 @@ async def handle_state_update(msg: dict, ws: WebSocket) -> None:
         if "play_state" in payload:
             room.state["play_state"] = payload["play_state"]
 
-    await broadcast(room, stamp_server_ts(msg), exclude_client=None)
+    await manager.broadcast(room, stamp_server_ts(msg))
 
 
 async def handle_force_resync(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
-    if not room_id or not client_id:
-        await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
+    room_id, client_id = msg.get("room"), msg.get("client")
+    room = manager.get_room(room_id)
+    if not room or client_id != room.host_id:
         return
-    room = rooms.get(room_id)
-    if not room:
-        await send_error(ws, "room_missing", "room not found", room_id, client_id)
-        return
-    if client_id != room.host_id:
-        await send_error(ws, "not_host", "only host can resync", room_id, client_id)
-        return
-    await broadcast(room, stamp_server_ts(msg), exclude_client=None)
+    await manager.broadcast(room, stamp_server_ts(msg))
 
 
 async def handle_create_invite(msg: dict, ws: WebSocket) -> None:
-    room_id = msg.get("room")
-    client_id = msg.get("client")
+    room_id, client_id = msg.get("room"), msg.get("client")
     payload = msg.get("payload") or {}
-    if not room_id or not client_id:
-        await send_error(ws, "bad_request", "room and client are required", room_id, client_id)
-        return
-    room = rooms.get(room_id)
-    if not room:
-        await send_error(ws, "room_missing", "room not found", room_id, client_id)
-        return
-    if client_id != room.host_id:
-        await send_error(ws, "not_host", "only host can create invite", room_id, client_id)
+    room = manager.get_room(room_id)
+    if not room or client_id != room.host_id:
         return
     if not JWT_SECRET:
         await send_error(ws, "invite_disabled", "JWT_SECRET required", room_id, client_id)
         return
     ok, claims, err = require_auth(payload)
-    if not ok:
-        await send_error(ws, err or "auth_failed", "auth required", room_id, client_id)
-        return
-    if claims and not require_roles(claims, INVITE_ROLES or HOST_ROLES):
+    if not ok or (claims and not require_roles(claims, INVITE_ROLES or HOST_ROLES)):
         await send_error(ws, "forbidden", "insufficient role", room_id, client_id)
         return
-    ttl_seconds = payload.get("expires_in")
-    invite = issue_invite(room_id, ttl_seconds)
+    
+    invite = issue_invite(room_id, payload.get("expires_in"))
     await ws.send_json(make_message("invite_created", room_id, client_id, invite))
 
 
@@ -397,21 +295,19 @@ async def handle_ping(msg: dict, ws: WebSocket) -> None:
 
 
 async def handle_message(msg: dict, ws: WebSocket) -> None:
+    handlers = {
+        "create_room": handle_create_room,
+        "join_room": handle_join_room,
+        "player_event": handle_player_event,
+        "state_update": handle_state_update,
+        "force_resync": handle_force_resync,
+        "create_invite": handle_create_invite,
+        "ping": handle_ping,
+    }
     msg_type = msg.get("type")
-    if msg_type == "create_room":
-        await handle_create_room(msg, ws)
-    elif msg_type == "join_room":
-        await handle_join_room(msg, ws)
-    elif msg_type == "player_event":
-        await handle_player_event(msg, ws)
-    elif msg_type == "state_update":
-        await handle_state_update(msg, ws)
-    elif msg_type == "force_resync":
-        await handle_force_resync(msg, ws)
-    elif msg_type == "create_invite":
-        await handle_create_invite(msg, ws)
-    elif msg_type == "ping":
-        await handle_ping(msg, ws)
+    handler = handlers.get(msg_type)
+    if handler:
+        await handler(msg, ws)
     else:
         await send_error(ws, "unknown_type", f"unknown message type: {msg_type}", msg.get("room"), msg.get("client"))
 
@@ -429,43 +325,37 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                 continue
             await handle_message(msg, ws)
     except WebSocketDisconnect:
-        client_info = clients_by_ws.pop(ws, None)
-        if not client_info:
+        result = manager.remove_client(ws)
+        if not result:
             return
-        room = rooms.get(client_info.room_id)
-        if not room:
-            return
-        room.clients.pop(client_info.client_id, None)
+        room, client_info = result
         if room.host_id == client_info.client_id:
             remaining = list(room.clients.values())
             if remaining:
                 room.host_id = remaining[0].client_id
-                await broadcast(
+                await manager.broadcast(
                     room,
                     make_message("host_change", room.room_id, room.host_id, {"host_id": room.host_id}),
-                    exclude_client=None,
                 )
-                await broadcast(
+                await manager.broadcast(
                     room,
-                    make_message("participants_update", room.room_id, room.host_id, participants_payload(room)),
-                    exclude_client=None,
+                    make_message("participants_update", room.room_id, room.host_id, manager.get_participants_payload(room)),
                 )
             else:
-                rooms.pop(room.room_id, None)
+                manager.remove_room(room.room_id)
         else:
-            await broadcast(
+            await manager.broadcast(
                 room,
                 make_message("client_left", room.room_id, client_info.client_id, {}),
                 exclude_client=None,
             )
-            await broadcast(
+            await manager.broadcast(
                 room,
-                make_message("participants_update", room.room_id, client_info.client_id, participants_payload(room)),
+                make_message("participants_update", room.room_id, client_info.client_id, manager.get_participants_payload(room)),
                 exclude_client=None,
             )
 
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("app:app", host="0.0.0.0", port=8999, reload=False)

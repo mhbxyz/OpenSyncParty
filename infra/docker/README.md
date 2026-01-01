@@ -8,7 +8,6 @@ Le `docker-compose.yml` provisionne:
 
 - Jellyfin 10.11.3
 - Session server (WS)
-- Redis
 - Un builder pour compiler le plugin Jellyfin (server-side)
 - Le plugin UI Jellyfin Web monté par défaut
 
@@ -34,7 +33,7 @@ make jellyfin-build-plugin
 ### Démarrer Jellyfin + session-server
 
 ```bash
-docker compose up -d jellyfin session-server redis
+docker compose up -d jellyfin session-server
 ```
 
 ### Notes

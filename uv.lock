@@ -323,9 +323,6 @@ all = [
     { name = "uvicorn" },
     { name = "websockets" },
 ]
-mpv = [
-    { name = "websockets" },
-]
 server = [
     { name = "fastapi" },
     { name = "pyjwt" },
@@ -348,7 +345,6 @@ all = [
     { name = "uvicorn", specifier = "==0.30.1" },
     { name = "websockets", specifier = "==12.0" },
 ]
-mpv = [{ name = "websockets", specifier = "==12.0" }]
 server = [
     { name = "fastapi", specifier = "==0.111.0" },
     { name = "pyjwt", specifier = "==2.8.0" },

@@ -12,10 +12,6 @@ services:
       - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
       - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
 
-  redis:
-    image: redis:7
-    restart: unless-stopped
-
   session-server:
     image: python:3.11-slim
     working_dir: /workspace
@@ -26,8 +22,6 @@ services:
       - "8999:8999"
     environment:
       - JWT_SECRET=changeme
-    depends_on:
-      - redis
 
   plugin-builder:
     image: mcr.microsoft.com/dotnet/sdk:9.0

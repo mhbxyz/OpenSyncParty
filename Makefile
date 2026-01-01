@@ -2,7 +2,7 @@ UV ?= uv
 VENV ?= .venv
 PY := $(VENV)/bin/python
 
-.PHONY: help venv sync-server sync-mpv sync-tests sync-all server demo mpv-host mpv-join test-harness test \
+.PHONY: help venv sync-server sync-tests sync-all server demo test-harness test \
 	compose-up compose-down compose-server compose-demo compose-harness \
 	jellyfin-up jellyfin-down jellyfin-sync-refs jellyfin-build-plugin jellyfin-build-plugin-local jellyfin-logs
 
@@ -10,8 +10,6 @@ help:
 	@echo "OpenSyncParty targets:"
 	@echo "  make server        - run session server (uv venv + deps)"
 	@echo "  make demo          - serve web demo on :8000"
-	@echo "  make mpv-host      - run MPV adapter as host (ROOM=...)"
-	@echo "  make mpv-join      - run MPV adapter as joiner (ROOM=...)"
 	@echo "  make test-harness  - run protocol harness"
 	@echo "  make test          - run pytest suite"
 	@echo "  make compose-up    - start docker compose services"
@@ -32,9 +30,6 @@ venv:
 sync-server:
 	$(UV) sync --group server
 
-sync-mpv:
-	$(UV) sync --group mpv
-
 sync-tests:
 	$(UV) sync --group tests
 
@@ -46,14 +41,6 @@ server: sync-server
 
 demo: venv
 	$(PY) -m http.server 8000 --directory clients/web-overlay
-
-mpv-host: sync-mpv
-	@if [ -z "$(ROOM)" ]; then echo "ROOM is required (e.g. make mpv-host ROOM=my-room)"; exit 1; fi
-	$(PY) clients/mpv/opensyncparty.py --room $(ROOM) --host $(ARGS)
-
-mpv-join: sync-mpv
-	@if [ -z "$(ROOM)" ]; then echo "ROOM is required (e.g. make mpv-join ROOM=my-room)"; exit 1; fi
-	$(PY) clients/mpv/opensyncparty.py --room $(ROOM) $(ARGS)
 
 test-harness: sync-tests
 	$(PY) tests/protocol_harness.py --ws ws://localhost:8999/ws

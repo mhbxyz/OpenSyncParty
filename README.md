@@ -2,13 +2,13 @@
 
 OpenSyncParty is an open-source synchronization layer designed to bring real-time watch-party functionality to Jellyfin and other local media players. It provides a lightweight, latency-aware coordinator that keeps multiple viewers perfectly in sync, regardless of their device or player.
 
-The system operates through a small server component and client-side adapters, making it compatible with popular players such as VLC, MPV, or Jellyfin Web. Its modular architecture allows easy integration, community-driven extensions, and long-term maintainability.
+The system operates through a small server component and client-side adapters, currently focusing on Web/Jellyfin integration. Its modular architecture allows easy integration, community-driven extensions, and long-term maintainability.
 
 ## Key Features
 
 * Real-time synchronization of play, pause, seek, and playback position
 * Works with Jellyfin libraries, hosted locally or via Cloudflare tunnels
-* Open client protocol for MPV, VLC, or browser-based players
+* Browser-based players support (Web Overlay)
 * Group session management with rooms, permissions, and chat API
 * Designed for WAN environments with jitter-tolerant syncing
 * Fully open-source and easily extensible
@@ -20,7 +20,6 @@ OpenSyncParty aims to fill the gap left by missing native watch-party support in
 - Session server: `session-server/app.py`
 - Web UI plugin: `clients/web-plugin/`
 - Web overlay: `clients/web-overlay/overlay.js`
-- MPV adapter: `clients/mpv/opensyncparty.py`
 - Docker Compose: `docker-compose.yml`
 - Demo helper: `scripts/serve-demo.sh`
 
@@ -57,14 +56,7 @@ make demo
 
 Le plugin UI Jellyfin Web est dans `clients/web-plugin/`.
 
-3) Adapter MPV:
-
-```bash
-mpv --input-ipc-server=/tmp/mpv-socket /path/to/video.mp4
-make mpv-host ROOM=my-room
-```
-
-4) Vérifier le protocole:
+3) Vérifier le protocole:
 
 ```bash
 make test-harness
