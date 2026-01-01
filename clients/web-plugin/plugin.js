@@ -318,55 +318,33 @@
   const createToggle = () => {
     if (document.getElementById(TOGGLE_ID)) return;
     
-    // Selectors for different Jellyfin/web versions
-    const selectors = [
-      '.videoOsdBottom .buttons',
-      '.videoOsdBottom',
-      '.btnVideoOsdSettings',
-      'div[data-role="controlgroup"][data-type="horizontal"]'
-    ];
-
-    let target = null;
-    for (const sel of selectors) {
-      target = document.querySelector(sel);
-      if (target) break;
-    }
-
-    if (!target) return;
-
-    // Avoid injecting into settings menu itself if matched
-    if (target.classList.contains('btnVideoOsdSettings')) {
-        target = target.parentNode;
-    }
+    // Inject into the header right section
+    const headerRight = document.querySelector('.headerRight');
+    if (!headerRight) return;
 
     const btn = document.createElement('button');
     btn.id = TOGGLE_ID;
-    btn.className = 'paper-icon-button-light btnWatchParty autoSize';
-    btn.style.cssText = 'color: #fff; margin: 0 0.5em;';
+    // Use native header button classes for consistent styling
+    btn.className = 'headerButton headerButtonRight paper-icon-button-light btnWatchParty';
     btn.setAttribute('title', 'Watch Party');
     btn.setAttribute('type', 'button');
-    btn.innerHTML = '<span class="material-icons" aria-hidden="true" style="font-size: 1.8em;">group</span>';
+    // Using 'groups' icon which fits well with SyncPlay/WatchParty theme
+    btn.innerHTML = '<span class="material-icons groups" aria-hidden="true"></span>';
     
     btn.addEventListener('click', () => {
       const panel = document.getElementById(PANEL_ID);
       if (panel) {
           panel.classList.toggle('hide');
-          // Auto-focus input if opening
           if (!panel.classList.contains('hide')) {
               setTimeout(() => panel.querySelector('.osp-name').focus(), 100);
           }
       }
     });
 
-    // Insert before settings or at the end
-    const settingsBtn = target.querySelector('.btnVideoOsdSettings');
-    if (settingsBtn) {
-        target.insertBefore(btn, settingsBtn);
-    } else {
-        target.appendChild(btn);
-    }
+    // Insert as the first item in headerRight
+    headerRight.insertBefore(btn, headerRight.firstChild);
     
-    console.log('[OpenSyncParty] Toggle button injected');
+    console.log('[OpenSyncParty] Toggle button injected into header');
   };
 
   const injectStyles = () => {
