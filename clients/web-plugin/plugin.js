@@ -1,4 +1,5 @@
 (() => {
+  console.log("%c OpenSyncParty Plugin Loaded ", "background: #2e7d32; color: #fff; font-size: 12px; padding: 2px; border-radius: 2px;");
   const PANEL_ID = 'osp-watchparty-panel';
   const TOGGLE_ID = 'osp-watchparty-toggle';
   const STYLE_ID = 'osp-watchparty-style';
@@ -316,19 +317,56 @@
 
   const createToggle = () => {
     if (document.getElementById(TOGGLE_ID)) return;
-    const target = document.querySelector('.btnVideoOsdSettings') || document.querySelector('.videoOsdBottom .buttons');
+    
+    // Selectors for different Jellyfin/web versions
+    const selectors = [
+      '.videoOsdBottom .buttons',
+      '.videoOsdBottom',
+      '.btnVideoOsdSettings',
+      'div[data-role="controlgroup"][data-type="horizontal"]'
+    ];
+
+    let target = null;
+    for (const sel of selectors) {
+      target = document.querySelector(sel);
+      if (target) break;
+    }
+
     if (!target) return;
+
+    // Avoid injecting into settings menu itself if matched
+    if (target.classList.contains('btnVideoOsdSettings')) {
+        target = target.parentNode;
+    }
+
     const btn = document.createElement('button');
     btn.id = TOGGLE_ID;
     btn.className = 'paper-icon-button-light btnWatchParty autoSize';
-    btn.style.color = '#fff';
+    btn.style.cssText = 'color: #fff; margin: 0 0.5em;';
     btn.setAttribute('title', 'Watch Party');
-    btn.innerHTML = '<span class="largePaperIconButton material-icons" aria-hidden="true">group</span>';
+    btn.setAttribute('type', 'button');
+    btn.innerHTML = '<span class="material-icons" aria-hidden="true" style="font-size: 1.8em;">group</span>';
+    
     btn.addEventListener('click', () => {
       const panel = document.getElementById(PANEL_ID);
-      if (panel) panel.classList.toggle('hide');
+      if (panel) {
+          panel.classList.toggle('hide');
+          // Auto-focus input if opening
+          if (!panel.classList.contains('hide')) {
+              setTimeout(() => panel.querySelector('.osp-name').focus(), 100);
+          }
+      }
     });
-    target.parentNode.insertBefore(btn, target.nextSibling);
+
+    // Insert before settings or at the end
+    const settingsBtn = target.querySelector('.btnVideoOsdSettings');
+    if (settingsBtn) {
+        target.insertBefore(btn, settingsBtn);
+    } else {
+        target.appendChild(btn);
+    }
+    
+    console.log('[OpenSyncParty] Toggle button injected');
   };
 
   const injectStyles = () => {
