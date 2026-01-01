@@ -20,7 +20,7 @@ services:
     working_dir: /workspace
     volumes:
       - ./:/workspace
-    command: python -m http.server 8000 --directory clients/web
+    command: python -m http.server 8000 --directory clients/web-overlay
     ports:
       - "8000:8000"
   protocol-harness:

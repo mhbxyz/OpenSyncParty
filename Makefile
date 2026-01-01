@@ -39,7 +39,7 @@ server: sync-server
 	$(PY) session-server/app.py
 
 demo: venv
-	$(PY) -m http.server 8000 --directory clients/web
+	$(PY) -m http.server 8000 --directory clients/web-overlay
 
 mpv-host: sync-mpv
 	@if [ -z "$(ROOM)" ]; then echo "ROOM is required (e.g. make mpv-host ROOM=my-room)"; exit 1; fi

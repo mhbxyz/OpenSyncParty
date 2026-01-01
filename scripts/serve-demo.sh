@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-WEB_DIR="$ROOT_DIR/clients/web"
+WEB_DIR="$ROOT_DIR/clients/web-overlay"
 PORT=${1:-8000}
 
 cd "$WEB_DIR"
