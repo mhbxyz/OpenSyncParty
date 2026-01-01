@@ -1,4 +1,3 @@
-using System;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -8,7 +7,7 @@ using OpenSyncParty.Plugin.Managers;
 
 namespace OpenSyncParty.Plugin;
 
-public class Plugin : BasePlugin<PluginConfiguration>
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public static Plugin? Instance { get; private set; }
     public RoomManager RoomManager { get; } = new();
@@ -22,4 +21,16 @@ public class Plugin : BasePlugin<PluginConfiguration>
     public override string Name => "OpenSyncParty";
 
     public override Guid Id => new("0f2fd0fd-09ff-4f49-9f1c-4a8f421a4b7d");
+
+    public IEnumerable<PluginPageInfo> GetPages()
+    {
+        return new[]
+        {
+            new PluginPageInfo
+            {
+                Name = "OpenSyncParty",
+                EmbeddedResourcePath = GetType().Namespace + ".Web.configPage.html"
+            }
+        };
+    }
 }

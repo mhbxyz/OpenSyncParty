@@ -417,3 +417,59 @@ PRAGMA temp_store=2;
 [2026-01-01 17:27:29.798 +00:00] [INF] [26] Emby.Server.Implementations.IO.LibraryMonitor: Watching directory "/media/Movies"
 [2026-01-01 17:27:43.716 +00:00] [INF] [19] Jellyfin.Api.Helpers.MediaInfoHelper: User policy for "root". EnablePlaybackRemuxing: True EnableVideoPlaybackTranscoding: True EnableAudioPlaybackTranscoding: True
 [2026-01-01 17:28:10.264 +00:00] [INF] [17] Emby.Server.Implementations.Session.SessionManager: Playback stopped reported by app "Jellyfin Web" "10.11.3" playing "Pearl". Stopped at "4192" ms
+[2026-01-01 17:32:19.318 +00:00] [INF] [29] Emby.Server.Implementations.Session.SessionWebSocketListener: Sending ForceKeepAlive message to 1 inactive WebSockets.
+[2026-01-01 17:36:55.319 +00:00] [INF] [34] Emby.Server.Implementations.Session.SessionWebSocketListener: Sending ForceKeepAlive message to 1 inactive WebSockets.
+[2026-01-01 17:38:34.717 +00:00] [INF] [29] Emby.Server.Implementations.Session.SessionManager: Sending shutdown notifications
+[2026-01-01 17:38:34.728 +00:00] [INF] [32] Emby.Server.Implementations.HttpServer.WebSocketManager: WS "172.21.0.1" closed
+[2026-01-01 17:38:34.742 +00:00] [INF] [34] Main: Running query planner optimizations in the database... This might take a while
+[2026-01-01 17:38:34.844 +00:00] [INF] [32] Emby.Server.Implementations.IO.LibraryMonitor: Stopping directory watching for path "/media/Movies"
+[2026-01-01 17:38:34.863 +00:00] [INF] [34] Emby.Server.Implementations.ApplicationHost: Disposing "CoreAppHost"
+[2026-01-01 17:38:34.863 +00:00] [INF] [34] Emby.Server.Implementations.ApplicationHost: Disposing "MusicBrainzArtistProvider"
+[2026-01-01 17:38:34.868 +00:00] [INF] [34] Emby.Server.Implementations.ApplicationHost: Disposing "MusicBrainzAlbumProvider"
+[2026-01-01 17:38:34.868 +00:00] [INF] [34] Emby.Server.Implementations.ApplicationHost: Disposing "PluginManager"
+[2026-01-01 17:38:36.465 +00:00] [INF] [1] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/cache"
+[2026-01-01 17:38:36.835 +00:00] [INF] [7] Jellyfin.Server.ServerSetupApp.SetupServer: Kestrel is listening on "0.0.0.0"
+[2026-01-01 17:38:36.884 +00:00] [INF] [7] Main: Jellyfin version: "10.11.3"
+[2026-01-01 17:38:36.888 +00:00] [INF] [7] Main: Environment Variables: ["[JELLYFIN_WEB_DIR, /jellyfin/jellyfin-web]", "[JELLYFIN_DATA_DIR, /config]", "[JELLYFIN_LOG_DIR, /config/log]", "[JELLYFIN_FFMPEG, /usr/lib/jellyfin-ffmpeg/ffmpeg]", "[JELLYFIN_CONFIG_DIR, /config/config]", "[JELLYFIN_CACHE_DIR, /cache]"]
+[2026-01-01 17:38:36.892 +00:00] [INF] [7] Main: Arguments: ["/jellyfin/jellyfin.dll"]
+[2026-01-01 17:38:36.893 +00:00] [INF] [7] Main: Operating system: "Debian GNU/Linux 13 (trixie)"
+[2026-01-01 17:38:36.893 +00:00] [INF] [7] Main: Architecture: X64
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: 64-Bit Process: True
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: User Interactive: True
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Processor count: 4
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Program data path: "/config"
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Log directory path: "/config/log"
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Config directory path: "/config/config"
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Cache path: "/cache"
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Temp directory path: "/tmp/jellyfin"
+[2026-01-01 17:38:36.894 +00:00] [INF] [7] Main: Web resources path: "/jellyfin/jellyfin-web"
+[2026-01-01 17:38:36.895 +00:00] [INF] [7] Main: Application directory: "/jellyfin/"
+[2026-01-01 17:38:36.919 +00:00] [INF] [7] Jellyfin.Server.Startup: Storage path `"/config/data"` (Fixed) successfully checked with "4.1GiB" free which is over the minimum of "2GiB".
+[2026-01-01 17:38:36.920 +00:00] [INF] [7] Jellyfin.Server.Startup: Storage path `"/cache"` (Fixed) successfully checked with "4.1GiB" free which is over the minimum of "2GiB".
+[2026-01-01 17:38:36.920 +00:00] [INF] [7] Jellyfin.Server.Startup: Storage path `"/config"` (Fixed) successfully checked with "4.1GiB" free which is over the minimum of "2GiB".
+[2026-01-01 17:38:36.925 +00:00] [INF] [7] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/cache"
+[2026-01-01 17:38:37.042 +00:00] [INF] [7] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLite connection string: "Data Source=/config/data/jellyfin.db;Cache=Default;Default Timeout=30;Pooling=True"
+[2026-01-01 17:38:37.053 +00:00] [INF] [7] Jellyfin.Database.Providers.Sqlite.SqliteDatabaseProvider: SQLITE connection pragma command set to: 
+"PRAGMA locking_mode=NORMAL;
+PRAGMA journal_size_limit=134217728;
+PRAGMA synchronous=1;
+PRAGMA temp_store=2;
+"
+[2026-01-01 17:38:37.055 +00:00] [INF] [7] Jellyfin.Database.Implementations.Locking.NoLockBehavior: The database locking mode has been set to: NoLock.
+[2026-01-01 17:38:37.112 +00:00] [INF] [7] Jellyfin.Server.Migrations.JellyfinMigrationService: Initialise Migration service.
+[2026-01-01 17:38:38.704 +00:00] [INF] [7] Jellyfin.Server.Migrations.JellyfinMigrationService: There are 0 migrations for stage PreInitialisation.
+[2026-01-01 17:38:38.726 +00:00] [INF] [7] Emby.Server.Implementations.AppBase.BaseConfigurationManager: Setting cache path: "/cache"
+[2026-01-01 17:38:38.858 +00:00] [INF] [7] Emby.Server.Implementations.ApplicationHost: Loading assemblies
+[2026-01-01 17:38:38.879 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "Microsoft.IdentityModel.Logging, Version=6.35.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" from "/config/plugins/OpenSyncParty/Microsoft.IdentityModel.Logging.dll"
+[2026-01-01 17:38:38.929 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "Microsoft.IdentityModel.Tokens, Version=6.35.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" from "/config/plugins/OpenSyncParty/Microsoft.IdentityModel.Tokens.dll"
+[2026-01-01 17:38:38.930 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "Microsoft.IdentityModel.Abstractions, Version=6.35.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" from "/config/plugins/OpenSyncParty/Microsoft.IdentityModel.Abstractions.dll"
+[2026-01-01 17:38:38.933 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "OpenSyncPartyPlugin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" from "/config/plugins/OpenSyncParty/OpenSyncPartyPlugin.dll"
+[2026-01-01 17:38:38.935 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "Microsoft.IdentityModel.JsonWebTokens, Version=6.35.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" from "/config/plugins/OpenSyncParty/Microsoft.IdentityModel.JsonWebTokens.dll"
+[2026-01-01 17:38:38.936 +00:00] [INF] [7] Emby.Server.Implementations.Plugins.PluginManager: Loaded assembly "System.IdentityModel.Tokens.Jwt, Version=6.35.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" from "/config/plugins/OpenSyncParty/System.IdentityModel.Tokens.Jwt.dll"
+[2026-01-01 17:38:39.001 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Defined LAN subnets: ["127.0.0.1/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-01-01 17:38:39.001 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Defined LAN exclusions: []
+[2026-01-01 17:38:39.002 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Used LAN subnets: ["127.0.0.1/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+[2026-01-01 17:38:39.004 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Filtered interface addresses: ["127.0.0.1", "172.21.0.2"]
+[2026-01-01 17:38:39.005 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Bind Addresses ["0.0.0.0"]
+[2026-01-01 17:38:39.005 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Remote IP filter is "Allowlist"
+[2026-01-01 17:38:39.005 +00:00] [INF] [7] Jellyfin.Networking.Manager.NetworkManager: Filtered subnets: []
