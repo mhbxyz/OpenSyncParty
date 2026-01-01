@@ -42,3 +42,13 @@ dotnet publish -c Release -o ./dist
 
 Les dépendances Jellyfin sont sur `https://nuget.jellyfin.org/v3/index.json`.
 Un `nuget.config` est fourni pour résoudre correctement les packages.
+
+## Build sans NuGet Jellyfin (références locales)
+
+Si le feed Jellyfin est inaccessible, tu peux copier les DLL depuis un
+conteneur Jellyfin :
+
+```bash
+./scripts/sync-jellyfin-refs.sh
+dotnet publish -c Release -o ./dist /p:UseLocalJellyfinRefs=true
+```

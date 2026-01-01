@@ -2,6 +2,7 @@ using System;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Serialization;
 using OpenSyncParty.Plugin.Configuration;
 
 namespace OpenSyncParty.Plugin;

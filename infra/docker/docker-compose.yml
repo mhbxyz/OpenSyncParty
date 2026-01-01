@@ -30,12 +30,13 @@ services:
       - redis
 
   plugin-builder:
-    image: mcr.microsoft.com/dotnet/sdk:6.0
+    image: mcr.microsoft.com/dotnet/sdk:9.0
     working_dir: /src
+    network_mode: host
     volumes:
       - ../../plugins/jellyfin/OpenSyncParty:/src
       - ../../plugins/jellyfin/OpenSyncParty/dist:/out
-    command: bash -lc "apt-get update && apt-get install -y ca-certificates curl && dotnet publish -c Release -o /out OpenSyncPartyPlugin.csproj"
+    command: dotnet publish -c Release -o /out OpenSyncPartyPlugin.csproj /p:UseLocalJellyfinRefs=true
 
 volumes:
   jellyfin-config:

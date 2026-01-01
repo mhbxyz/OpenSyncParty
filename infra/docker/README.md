@@ -24,6 +24,13 @@ Si le build échoue pour raisons réseau/TLS, tu peux builder en local:
 make jellyfin-build-plugin-local
 ```
 
+Si tu as une erreur TLS sur `nuget.jellyfin.org`, utilise les références locales:
+
+```bash
+make jellyfin-sync-refs
+make jellyfin-build-plugin
+```
+
 ### Démarrer Jellyfin + session-server
 
 ```bash

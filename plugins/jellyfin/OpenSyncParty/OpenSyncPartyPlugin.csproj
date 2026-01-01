@@ -1,15 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseLocalJellyfinRefs Condition="Exists('refs/MediaBrowser.Common.dll')">true</UseLocalJellyfinRefs>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalJellyfinRefs)' != 'true'">
     <PackageReference Include="Jellyfin.Plugin" Version="10.11.3" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.3" />
     <PackageReference Include="MediaBrowser.Common" Version="10.11.3" />
     <PackageReference Include="MediaBrowser.Model" Version="10.11.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalJellyfinRefs)' == 'true'">
+    <Reference Include="MediaBrowser.Controller">
+      <HintPath>refs/MediaBrowser.Controller.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MediaBrowser.Common">
+      <HintPath>refs/MediaBrowser.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MediaBrowser.Model">
+      <HintPath>refs/MediaBrowser.Model.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.35.0" />
   </ItemGroup>

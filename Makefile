@@ -4,7 +4,7 @@ PY := $(VENV)/bin/python
 
 .PHONY: help venv sync-server sync-mpv sync-tests sync-all server demo mpv-host mpv-join test-harness test \
 	compose-up compose-down compose-server compose-demo compose-harness \
-	jellyfin-up jellyfin-down jellyfin-build-plugin jellyfin-build-plugin-local jellyfin-logs
+	jellyfin-up jellyfin-down jellyfin-sync-refs jellyfin-build-plugin jellyfin-build-plugin-local jellyfin-logs
 
 help:
 	@echo "OpenSyncParty targets:"
@@ -21,6 +21,7 @@ help:
 	@echo "  make compose-harness - run protocol harness service"
 	@echo "  make jellyfin-up   - start Jellyfin stack (infra/docker)"
 	@echo "  make jellyfin-down - stop Jellyfin stack (infra/docker)"
+	@echo "  make jellyfin-sync-refs - sync Jellyfin DLL refs from container"
 	@echo "  make jellyfin-build-plugin - build Jellyfin server plugin"
 	@echo "  make jellyfin-logs - tail Jellyfin container logs"
 	@echo "  make venv          - create uv virtual env"
@@ -81,7 +82,10 @@ jellyfin-up:
 jellyfin-down:
 	docker compose -f infra/docker/docker-compose.yml down
 
-jellyfin-build-plugin:
+jellyfin-sync-refs:
+	./scripts/sync-jellyfin-refs.sh
+
+jellyfin-build-plugin: jellyfin-sync-refs
 	docker compose -f infra/docker/docker-compose.yml run --rm plugin-builder
 
 jellyfin-build-plugin-local:
