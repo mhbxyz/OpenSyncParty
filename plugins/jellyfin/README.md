@@ -37,3 +37,8 @@ Pour packager:
 ```bash
 dotnet publish -c Release -o ./dist
 ```
+
+## Notes NuGet
+
+Les dépendances Jellyfin sont sur `https://nuget.jellyfin.org/v3/index.json`.
+Un `nuget.config` est fourni pour résoudre correctement les packages.

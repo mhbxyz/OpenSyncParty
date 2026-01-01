@@ -1,16 +1,42 @@
 version: "3.8"
 
 services:
+  jellyfin:
+    image: jellyfin/jellyfin:10.11.3
+    container_name: jellyfin
+    ports:
+      - "8097:8097"
+    volumes:
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+      - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
+      - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
+
   redis:
     image: redis:7
     restart: unless-stopped
 
   session-server:
-    build: ../../session-server
+    image: python:3.11-slim
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace
+    command: bash -lc "pip install uv && uv sync --group server && .venv/bin/python session-server/app.py"
     ports:
       - "8999:8999"
     environment:
-      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=changeme
     depends_on:
       - redis
+
+  plugin-builder:
+    image: mcr.microsoft.com/dotnet/sdk:6.0
+    working_dir: /src
+    volumes:
+      - ../../plugins/jellyfin/OpenSyncParty:/src
+      - ../../plugins/jellyfin/OpenSyncParty/dist:/out
+    command: bash -lc "apt-get update && apt-get install -y ca-certificates curl && dotnet publish -c Release -o /out OpenSyncPartyPlugin.csproj"
+
+volumes:
+  jellyfin-config:
+  jellyfin-cache:

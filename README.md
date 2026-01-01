@@ -35,6 +35,10 @@ OpenSyncParty aims to fill the gap left by missing native watch-party support in
 
 Copie `clients/web-plugin/` dans le dossier plugins du client web Jellyfin, puis recharge l’UI.
 
+## Docker (Jellyfin + plugins)
+
+Voir `infra/docker/README.md` pour lancer Jellyfin avec les plugins préinstallés.
+
 ## Démarrage rapide (PoC)
 
 1) Lancer le serveur (uv):

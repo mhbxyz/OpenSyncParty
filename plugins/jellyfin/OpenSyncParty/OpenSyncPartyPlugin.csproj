@@ -6,10 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Plugin" Version="10.9.0" />
-    <PackageReference Include="Jellyfin.Controller" Version="10.9.0" />
-    <PackageReference Include="MediaBrowser.Common" Version="10.9.0" />
-    <PackageReference Include="MediaBrowser.Model" Version="10.9.0" />
+    <PackageReference Include="Jellyfin.Plugin" Version="10.11.3" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.3" />
+    <PackageReference Include="MediaBrowser.Common" Version="10.11.3" />
+    <PackageReference Include="MediaBrowser.Model" Version="10.11.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.35.0" />
   </ItemGroup>
