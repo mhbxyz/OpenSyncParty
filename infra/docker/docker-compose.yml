@@ -14,10 +14,15 @@ services:
       - /bin/bash
       - -c
       - |
-        if ! grep -q "/OpenSyncParty/ClientScript" /jellyfin/jellyfin-web/index.html; then
-          sed -i 's|</body>|<script src="/OpenSyncParty/ClientScript"></script></body>|' /jellyfin/jellyfin-web/index.html
-          echo "Injected OpenSyncParty script URL into index.html"
-        fi
+        # Cache busting timestamp
+        TS=$$(date +%s)
+        # Remove old injection if exists (to avoid duplicates/stale versions)
+        sed -i '/OpenSyncParty\/ClientScript/d' /jellyfin/jellyfin-web/index.html
+        
+        # Inject new version
+        sed -i "s|</body>|<script src=\"/OpenSyncParty/ClientScript?v=$$TS\"></script></body>|" /jellyfin/jellyfin-web/index.html
+        echo "Injected OpenSyncParty script into index.html with cache buster v=$$TS"
+        
         /jellyfin/jellyfin
 
   plugin-builder:

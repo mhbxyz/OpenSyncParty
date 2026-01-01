@@ -21,6 +21,7 @@ start-server:
 	docker compose -f infra/docker/docker-compose.yml up -d jellyfin-dev && sleep 5
 
 build-plugin: start-server sync-refs
+	cp clients/web-plugin/plugin.js plugins/jellyfin/OpenSyncParty/Web/plugin.js
 	docker compose -f infra/docker/docker-compose.yml run --rm plugin-builder
 
 logs:
