@@ -1,5 +1,7 @@
 (() => {
-  const DEFAULT_WS_URL = "ws://localhost:8999/ws";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const host = window.location.host;
+  const DEFAULT_WS_URL = `${protocol}//${host}/OpenSyncParty/ws`;
   const SUPPRESS_MS = 500;
   const RECONNECT_DELAY = 3000;
 

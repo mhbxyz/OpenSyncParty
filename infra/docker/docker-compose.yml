@@ -1,27 +1,14 @@
-version: "3.8"
-
 services:
   jellyfin:
     image: jellyfin/jellyfin:10.11.3
     container_name: jellyfin
     ports:
-      - "8097:8097"
+      - "8096:8096"
     volumes:
       - jellyfin-config:/config
       - jellyfin-cache:/cache
       - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
       - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
-
-  session-server:
-    image: python:3.11-slim
-    working_dir: /workspace
-    volumes:
-      - ../../:/workspace
-    command: bash -lc "pip install uv && uv sync --group server && .venv/bin/python session-server/app.py"
-    ports:
-      - "8999:8999"
-    environment:
-      - JWT_SECRET=changeme
 
   plugin-builder:
     image: mcr.microsoft.com/dotnet/sdk:9.0
