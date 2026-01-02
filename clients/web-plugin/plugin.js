@@ -9,8 +9,9 @@
   const host = window.location.hostname;
   const DEFAULT_WS_URL = `${protocol}//${host}:3000/ws`;
   const SUPPRESS_MS = 1000;
-  const SEEK_THRESHOLD = 1.0;
-  const STATE_UPDATE_MS = 2000;
+  const SEEK_THRESHOLD = 0.5;
+  const STATE_UPDATE_MS = 1000;
+  const SYNC_LEAD_MS = 120;
 
   // --- STATE ---
   const state = {
@@ -36,6 +37,12 @@
   const shouldSend = () => nowMs() > state.suppressUntil;
   const suppress = (ms = SUPPRESS_MS) => { state.suppressUntil = nowMs() + ms; };
   const getVideo = () => document.querySelector('video');
+  const adjustedPosition = (position, serverTs) => {
+    const serverNow = nowMs() + (state.serverOffsetMs || 0);
+    const ts = typeof serverTs === 'number' ? serverTs : serverNow;
+    const elapsed = Math.max(0, serverNow - ts) + SYNC_LEAD_MS;
+    return position + (elapsed / 1000);
+  };
 
   // --- UI ---
 
@@ -208,9 +215,23 @@
           state.clientId = msg.client;
         }
         state.isHost = (msg.payload.host_id === state.clientId);
+        if (!state.hasTimeSync && typeof msg.server_ts === 'number') {
+          state.serverOffsetMs = msg.server_ts - nowMs();
+          state.hasTimeSync = true;
+        }
         render();
-        if (video && !state.isHost && msg.payload.state) {
-          suppress(); video.currentTime = msg.payload.state.position;
+        if (video && !state.isHost && msg.payload && msg.payload.state) {
+          const basePos = msg.payload.state.position || 0;
+          const targetPos = adjustedPosition(basePos, msg.server_ts);
+          suppress();
+          if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
+            video.currentTime = targetPos;
+          }
+          if (msg.payload.state.play_state === 'playing') {
+            video.play().catch(()=>{});
+          } else if (msg.payload.state.play_state === 'paused') {
+            video.pause();
+          }
         }
         break;
 
@@ -230,12 +251,9 @@
         if (state.isHost || !video) return;
         suppress();
         if (msg.payload && typeof msg.payload.position === 'number') {
-          const serverNow = nowMs() + (state.serverOffsetMs || 0);
-          const serverTs = typeof msg.server_ts === 'number' ? msg.server_ts : serverNow;
-          const elapsed = Math.max(0, serverNow - serverTs);
-          const adjustedPosition = msg.payload.position + (elapsed / 1000);
-          if (Math.abs(video.currentTime - adjustedPosition) > SEEK_THRESHOLD) {
-            video.currentTime = adjustedPosition;
+          const targetPos = adjustedPosition(msg.payload.position, msg.server_ts);
+          if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
+            video.currentTime = targetPos;
           }
         }
         if (msg.payload.action === 'play') video.play().catch(()=>{});
@@ -245,12 +263,9 @@
       case "state_update":
         if (state.isHost || !video) return;
         if (msg.payload && typeof msg.payload.position === 'number') {
-          const serverNow = nowMs() + (state.serverOffsetMs || 0);
-          const serverTs = typeof msg.server_ts === 'number' ? msg.server_ts : serverNow;
-          const elapsed = Math.max(0, serverNow - serverTs);
-          const adjustedPosition = msg.payload.position + (elapsed / 1000);
-          if (Math.abs(video.currentTime - adjustedPosition) > SEEK_THRESHOLD) {
-            suppress(); video.currentTime = adjustedPosition;
+          const targetPos = adjustedPosition(msg.payload.position, msg.server_ts);
+          if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
+            suppress(); video.currentTime = targetPos;
           }
         }
         if (msg.payload.play_state === 'playing' && video.paused) {
@@ -269,7 +284,7 @@
           if (typeof msg.server_ts === 'number' && rtt > 0) {
             const sampleOffset = msg.server_ts + (rtt / 2) - now;
             state.serverOffsetMs = state.hasTimeSync
-              ? (state.serverOffsetMs * 0.8 + sampleOffset * 0.2)
+              ? (state.serverOffsetMs * 0.6 + sampleOffset * 0.4)
               : sampleOffset;
             state.hasTimeSync = true;
           }
