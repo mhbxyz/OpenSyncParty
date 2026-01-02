@@ -1,24 +1,32 @@
 services:
   session-server:
-    build: ../../session-server-rust
+    build:
+      context: ../../session-server-rust
+      dockerfile: Dockerfile
+    container_name: opensyncparty-session-server
     ports:
-      - "3001:3000"
+      - "${SESSION_SERVER_PORT:-3000}:3000"
+    restart: unless-stopped
 
   jellyfin-dev:
     image: jellyfin/jellyfin:10.11.3
     container_name: jellyfin-dev
+    depends_on:
+      - session-server
     ports:
-      - "8096:8096"
+      - "${JELLYFIN_PORT:-8096}:8096"
     volumes:
       - ./config:/config
       - jellyfin-cache:/cache
-      - ~/Videos/Movies/:/media/Movies:ro
+      - ${MEDIA_DIR:-${HOME}/Videos/Movies}:/media/Movies:ro
       - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
       - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
+    restart: unless-stopped
     entrypoint:
       - /bin/bash
       - -c
       - |
+        set -e
         # Backup original index.html if not exists
         if [ ! -f /jellyfin/jellyfin-web/index.html.bak ]; then
           cp /jellyfin/jellyfin-web/index.html /jellyfin/jellyfin-web/index.html.bak
@@ -39,6 +47,8 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:9.0
     working_dir: /src
     network_mode: host
+    profiles:
+      - tools
     volumes:
       - ../../plugins/jellyfin/OpenSyncParty:/src
       - ../../plugins/jellyfin/OpenSyncParty/dist:/out

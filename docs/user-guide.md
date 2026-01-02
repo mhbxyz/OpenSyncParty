@@ -16,9 +16,9 @@ OpenSyncParty requires a session server for WebSocket sync.
     ```bash
     docker compose -f infra/docker/docker-compose.yml up -d session-server
     ```
-*   **Manual**: build and run the Rust server in `session-server-rust` and expose port `3001`.
+*   **Manual**: build and run the Rust server in `session-server-rust` and expose port `3000`.
 
-The Jellyfin web client expects the session server at `ws(s)://<jellyfin-host>:3001/ws`.
+The Jellyfin web client expects the session server at `ws(s)://<jellyfin-host>:3000/ws`.
 
 ### 3. Client Activation (Important!)
 

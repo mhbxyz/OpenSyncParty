@@ -1,28 +1,43 @@
-.PHONY: help up down sync-refs build-plugin logs
+.PHONY: help up down restart sync-refs build-plugin clean logs status
+
+COMPOSE = docker compose -f infra/docker/docker-compose.yml
+COMPOSE_TOOLS = docker compose --profile tools -f infra/docker/docker-compose.yml
 
 help:
 	@echo "OpenSyncParty targets:"
 	@echo "  make up           - start jellyfin stack (and build plugin if needed)"
 	@echo "  make down         - stop jellyfin stack"
+	@echo "  make restart      - restart jellyfin stack"
 	@echo "  make sync-refs    - sync Jellyfin DLL refs from container"
 	@echo "  make build-plugin - build Jellyfin server plugin"
+	@echo "  make clean        - remove local build artifacts"
 	@echo "  make logs         - tail Jellyfin container logs"
+	@echo "  make status       - show compose status"
 
 up: build-plugin
-	docker compose -f infra/docker/docker-compose.yml up -d session-server jellyfin-dev
+	$(COMPOSE) up -d session-server jellyfin-dev
 
 down:
-	docker compose -f infra/docker/docker-compose.yml down
+	$(COMPOSE) down
 
 sync-refs:
 	./scripts/sync-jellyfin-refs.sh
 
 start-server:
-	docker compose -f infra/docker/docker-compose.yml up -d session-server jellyfin-dev && sleep 5
+	$(COMPOSE) up -d session-server jellyfin-dev && sleep 5
 
 build-plugin: start-server sync-refs
 	cp clients/web-plugin/plugin.js plugins/jellyfin/OpenSyncParty/Web/plugin.js
-	docker compose -f infra/docker/docker-compose.yml run --rm plugin-builder
+	$(COMPOSE_TOOLS) run --rm plugin-builder
+
+restart:
+	$(COMPOSE) restart session-server jellyfin-dev
+
+clean:
+	rm -rf plugins/jellyfin/OpenSyncParty/dist plugins/jellyfin/OpenSyncParty/refs plugins/jellyfin/OpenSyncParty/Web/plugin.js session-server-rust/target
 
 logs:
-	docker compose -f infra/docker/docker-compose.yml logs -f jellyfin-dev
+	$(COMPOSE) logs -f --tail=200 jellyfin-dev session-server
+
+status:
+	$(COMPOSE) ps

@@ -15,7 +15,7 @@ make up
 This will:
 1.  Start Jellyfin on `http://localhost:8096`.
 2.  Build the plugin and mount it.
-3.  Start the Rust session server on `http://localhost:3001`.
+3.  Start the Rust session server on `http://localhost:3000`.
 4.  **Auto-inject the script**: The `docker-compose.yml` uses a custom entrypoint to inject `<script src="/OpenSyncParty/ClientScript"></script>` into `index.html` automatically. This saves you from doing the manual step described in the User Guide during development.
 
 ## Project Structure

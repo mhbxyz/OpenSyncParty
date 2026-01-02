@@ -11,19 +11,19 @@ OpenSyncParty is a Jellyfin plugin paired with a lightweight Rust session server
 
 ### 2. Session Server (Rust)
 
-*   **WebSocket Server**: Listens on `/ws` (default port `3001`) for real-time sync messages.
+*   **WebSocket Server**: Listens on `/ws` (default port `3000`) for real-time sync messages.
 *   **Room Manager**: In-memory state management for watch parties.
 
 ### 3. Web Client (JavaScript)
 
 *   **Injection**: Loaded via the "Custom HTML" feature of Jellyfin, fetching the script from the plugin's API.
 *   **UI**: Adds a button to the Jellyfin header bar.
-*   **Sync Logic**: Communicates with the session server WebSocket endpoint on `:3001`.
+*   **Sync Logic**: Communicates with the session server WebSocket endpoint on `:3000`.
 
 ## Data Flow
 
 1.  **Load**: Browser loads Jellyfin -> `index.html` -> `<script src="/OpenSyncParty/ClientScript">` -> Plugin Controller returns JS.
-2.  **Connect**: Script initializes, finds the header, injects the button, and connects WS to `ws(s)://<host>:3001/ws`.
+2.  **Connect**: Script initializes, finds the header, injects the button, and connects WS to `ws(s)://<host>:3000/ws`.
 3.  **Sync**: Playback events are intercepted and sent over WS.
 
 ## Security

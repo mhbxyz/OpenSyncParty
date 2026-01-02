@@ -2,7 +2,7 @@
 
 OpenSyncParty uses a JSON-based protocol over WebSocket.
 
-**Endpoint:** `ws(s)://<jellyfin-host>:3001/ws`
+**Endpoint:** `ws(s)://<jellyfin-host>:3000/ws`
 
 ## Message Format
 

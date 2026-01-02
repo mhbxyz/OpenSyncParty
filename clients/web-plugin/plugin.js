@@ -7,7 +7,7 @@
   
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const host = window.location.hostname;
-  const DEFAULT_WS_URL = `${protocol}//${host}:3001/ws`;
+  const DEFAULT_WS_URL = `${protocol}//${host}:3000/ws`;
   const SUPPRESS_MS = 1000;
 
   // --- STATE ---
@@ -87,7 +87,7 @@
               <button class="osp-btn" style="width:100%" id="osp-btn-create">Create & Host</button>
             </div>
         </div>
-        <div class="osp-footer">Connected to: ${host}:3001</div>
+        <div class="osp-footer">Connected to: ${host}:3000</div>
       `;
       panel.querySelector('#osp-btn-create').onclick = createRoom;
       updateRoomListUI();

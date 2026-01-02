@@ -25,7 +25,7 @@ OpenSyncParty is an open-source Jellyfin plugin that brings real-time watch-part
    make up
    ```
 3. Open Jellyfin at `http://localhost:8096`.
-4. Ensure the session server is reachable at `ws://localhost:3001/ws`.
+4. Ensure the session server is reachable at `ws://localhost:3000/ws`.
 5. Start a video and click the "Watch Party" icon in the player controls.
 
 ## Documentation
