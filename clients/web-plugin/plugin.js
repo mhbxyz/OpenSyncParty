@@ -9,6 +9,8 @@
   const host = window.location.hostname;
   const DEFAULT_WS_URL = `${protocol}//${host}:3000/ws`;
   const SUPPRESS_MS = 1000;
+  const SEEK_THRESHOLD = 1.0;
+  const STATE_UPDATE_MS = 2000;
 
   // --- STATE ---
   const state = {
@@ -22,8 +24,13 @@
     rooms: [], 
     inRoom: false,
     bound: false,
-    autoReconnect: true
+    autoReconnect: true,
+    serverOffsetMs: 0
   };
+  state.lastSeekSentAt = 0;
+  state.lastStateSentAt = 0;
+  state.lastSentPosition = 0;
+  state.hasTimeSync = false;
 
   const nowMs = () => Date.now();
   const shouldSend = () => nowMs() > state.suppressUntil;
@@ -222,23 +229,50 @@
       case "player_event":
         if (state.isHost || !video) return;
         suppress();
+        if (msg.payload && typeof msg.payload.position === 'number') {
+          const serverNow = nowMs() + (state.serverOffsetMs || 0);
+          const serverTs = typeof msg.server_ts === 'number' ? msg.server_ts : serverNow;
+          const elapsed = Math.max(0, serverNow - serverTs);
+          const adjustedPosition = msg.payload.position + (elapsed / 1000);
+          if (Math.abs(video.currentTime - adjustedPosition) > SEEK_THRESHOLD) {
+            video.currentTime = adjustedPosition;
+          }
+        }
         if (msg.payload.action === 'play') video.play().catch(()=>{});
         else if (msg.payload.action === 'pause') video.pause();
-        else if (msg.payload.action === 'seek') video.currentTime = msg.payload.position;
         break;
         
       case "state_update":
         if (state.isHost || !video) return;
-        if (Math.abs(video.currentTime - msg.payload.position) > 3.0) {
-          suppress(); video.currentTime = msg.payload.position;
+        if (msg.payload && typeof msg.payload.position === 'number') {
+          const serverNow = nowMs() + (state.serverOffsetMs || 0);
+          const serverTs = typeof msg.server_ts === 'number' ? msg.server_ts : serverNow;
+          const elapsed = Math.max(0, serverNow - serverTs);
+          const adjustedPosition = msg.payload.position + (elapsed / 1000);
+          if (Math.abs(video.currentTime - adjustedPosition) > SEEK_THRESHOLD) {
+            suppress(); video.currentTime = adjustedPosition;
+          }
+        }
+        if (msg.payload.play_state === 'playing' && video.paused) {
+          suppress(); video.play().catch(()=>{});
+        } else if (msg.payload.play_state === 'paused' && !video.paused) {
+          suppress(); video.pause();
         }
         break;
 
       case "pong":
         if (msg.payload && msg.payload.client_ts) {
-          const rtt = nowMs() - msg.payload.client_ts;
+          const now = nowMs();
+          const rtt = now - msg.payload.client_ts;
           const latEl = document.querySelector('.osp-latency');
           if(latEl) latEl.textContent = `${rtt} ms`;
+          if (typeof msg.server_ts === 'number' && rtt > 0) {
+            const sampleOffset = msg.server_ts + (rtt / 2) - now;
+            state.serverOffsetMs = state.hasTimeSync
+              ? (state.serverOffsetMs * 0.8 + sampleOffset * 0.2)
+              : sampleOffset;
+            state.hasTimeSync = true;
+          }
         }
         break;
     }
@@ -280,18 +314,33 @@
     const video = getVideo();
     if (!video || state.bound) return;
     state.bound = true;
+    const sendStateUpdate = () => {
+      if (!state.isHost || !state.ws || state.ws.readyState !== 1) return;
+      const now = nowMs();
+      if (now - state.lastStateSentAt < STATE_UPDATE_MS) return;
+      state.lastStateSentAt = now;
+      send('state_update', { position: video.currentTime, play_state: video.paused ? 'paused' : 'playing' });
+    };
     const onEvent = (action) => {
       if (!state.isHost || !shouldSend()) return;
+      if (action === 'seek') {
+        const now = nowMs();
+        if (now - state.lastSeekSentAt < 500) return;
+        if (Math.abs(video.currentTime - state.lastSentPosition) < SEEK_THRESHOLD) return;
+        state.lastSeekSentAt = now;
+        state.lastSentPosition = video.currentTime;
+      }
       send('player_event', { action, position: video.currentTime });
+      if (action === 'play' || action === 'pause') {
+        sendStateUpdate();
+      }
     };
     video.addEventListener('play', () => onEvent('play'));
     video.addEventListener('pause', () => onEvent('pause'));
     video.addEventListener('seeked', () => onEvent('seek'));
     setInterval(() => {
-      if (state.isHost && state.ws && state.ws.readyState === 1 && !video.paused) {
-        send('state_update', { position: video.currentTime, play_state: 'playing' });
-      }
-    }, 5000);
+      sendStateUpdate();
+    }, STATE_UPDATE_MS);
   };
 
   const init = () => {

@@ -22,7 +22,7 @@ OpenSyncParty is a Jellyfin plugin paired with a lightweight Rust session server
 
 ## Data Flow
 
-1.  **Load**: Browser loads Jellyfin -> `index.html` -> `<script src="/OpenSyncParty/ClientScript">` -> Plugin Controller returns JS.
+1.  **Load**: Browser loads Jellyfin -> `index.html` -> `<script src="/web/plugins/opensyncparty/plugin.js">` -> Web client loads JS.
 2.  **Connect**: Script initializes, finds the header, injects the button, and connects WS to `ws(s)://<host>:3000/ws`.
 3.  **Sync**: Playback events are intercepted and sent over WS.
 

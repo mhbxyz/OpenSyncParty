@@ -29,7 +29,7 @@ Since Jellyfin 10.9+, plugins cannot automatically inject scripts into the web i
 3.  Scroll down to the **Custom HTML** (or Branding) section.
 4.  Paste the following line into the "Custom HTML body" field:
     ```html
-    <script src="/OpenSyncParty/ClientScript"></script>
+    <script src="/web/plugins/opensyncparty/plugin.js"></script>
     ```
 5.  Click **Save**.
 6.  Refresh your browser (Ctrl+F5) to load the changes.

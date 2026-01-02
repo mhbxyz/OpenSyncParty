@@ -15,7 +15,7 @@ DLLS=(
 
 find_in_container() {
   local name=$1
-  docker exec -it "$CONTAINER" sh -lc "find /jellyfin /usr/lib/jellyfin -name $name 2>/dev/null | head -n 1" | tr -d '\r'
+  docker exec "$CONTAINER" sh -lc "find /jellyfin /usr/lib/jellyfin -name $name 2>/dev/null | head -n 1" | tr -d '\r'
 }
 
 for dll in "${DLLS[@]}"; do

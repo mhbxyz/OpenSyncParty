@@ -106,7 +106,7 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
     let msg_str = if let Ok(s) = msg.to_str() { s } else { return };
     println!("[server] Received from {}: {}", client_id, msg_str);
     
-    let parsed: WsMessage = match serde_json::from_str(msg_str) {
+    let mut parsed: WsMessage = match serde_json::from_str(msg_str) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("[server] JSON error: {}", e);
@@ -196,6 +196,9 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
         "player_event" | "state_update" => {
             if let Some(ref room_id) = parsed.room {
                 if let Some(room) = locked_rooms.get_mut(room_id) {
+                    if room.host_id != client_id {
+                        return;
+                    }
                     if let Some(payload) = &parsed.payload {
                         if let Some(pos) = payload.get("position").and_then(|v| v.as_f64()) { room.state.position = pos; }
                         if let Some(st) = payload.get("play_state").and_then(|v| v.as_str()) { room.state.play_state = st.to_string(); }
@@ -206,6 +209,7 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                              }
                         }
                     }
+                    parsed.server_ts = Some(now_ms());
                     for dest_id in &room.clients {
                         if dest_id != client_id { send_to_client(dest_id, &locked_clients, &parsed); }
                     }

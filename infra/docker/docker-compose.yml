@@ -34,10 +34,14 @@ services:
         
         # Restore original to ensure clean state
         cp /jellyfin/jellyfin-web/index.html.bak /jellyfin/jellyfin-web/index.html
+
+        # Remove previous injections if any
+        sed -i 's|<script src="/OpenSyncParty/ClientScript[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
+        sed -i 's|<script src="/web/plugins/opensyncparty/plugin.js[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
         
         # Inject new version with cache buster
         TS=$$(date +%s)
-        sed -i "s|</body>|<script src=\"/OpenSyncParty/ClientScript?v=$$TS\"></script></body>|" /jellyfin/jellyfin-web/index.html
+        sed -i "s|</body>|<script src=\"/web/plugins/opensyncparty/plugin.js?v=$$TS\"></script></body>|" /jellyfin/jellyfin-web/index.html
         
         echo "Restored and injected index.html with v=$$TS"
         
