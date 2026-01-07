@@ -21,24 +21,24 @@
       try {
         pm.play({ items: [item], startPositionTicks: 0 });
         return true;
-      } catch (err) {}
+      } catch (err) { }
       try {
         pm.play({ item: item, startPositionTicks: 0 });
         return true;
-      } catch (err) {}
+      } catch (err) { }
       const itemId = item?.Id || item?.id;
       if (itemId) {
         try {
           pm.play({ ids: [itemId], startPositionTicks: 0 });
           return true;
-        } catch (err) {}
+        } catch (err) { }
       }
     }
     if (typeof pm.playItems === 'function') {
       try {
         pm.playItems([item], 0);
         return true;
-      } catch (err) {}
+      } catch (err) { }
     }
     return false;
   };
@@ -193,8 +193,11 @@
       if (video.playbackRate !== 1) video.playbackRate = 1;
       return;
     }
-    // Speed catch-up: adjust playback rate to gradually sync without seeking
-    const rate = Math.min(Math.max(1 + drift * DRIFT_GAIN, PLAYBACK_RATE_MIN), PLAYBACK_RATE_MAX);
+    // Progressive catch-up: sqrt curve gives stronger correction for larger drifts
+    // while staying smooth. Example: 2s drift → 1.21x, 4s drift → 1.30x (clamped to 1.20x)
+    const sign = drift > 0 ? 1 : -1;
+    const correction = sign * Math.sqrt(abs) * DRIFT_GAIN;
+    const rate = Math.min(Math.max(1 + correction, PLAYBACK_RATE_MIN), PLAYBACK_RATE_MAX);
     video.playbackRate = rate;
   };
 

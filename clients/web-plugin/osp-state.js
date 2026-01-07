@@ -16,12 +16,12 @@
     SUPPRESS_MS: 2000,
     SEEK_THRESHOLD: 2.5,
     STATE_UPDATE_MS: 1000,
-    SYNC_LEAD_MS: 120,
+    SYNC_LEAD_MS: 300,            // Compensates processing + initial HLS buffer
     DRIFT_DEADZONE_SEC: 0.04,
-    DRIFT_SOFT_MAX_SEC: 2.5,
-    PLAYBACK_RATE_MIN: 0.95,
-    PLAYBACK_RATE_MAX: 1.05,
-    DRIFT_GAIN: 0.5
+    DRIFT_SOFT_MAX_SEC: 8.0,      // Only seek beyond 8s drift
+    PLAYBACK_RATE_MIN: 0.90,      // Allow slowdown if ahead
+    PLAYBACK_RATE_MAX: 1.20,      // More aggressive catch-up (imperceptible with pitch correction)
+    DRIFT_GAIN: 0.15              // For sqrt curve: 0.15 * sqrt(2s) ≈ 0.21 → 1.21x
   };
 
   OSP.state = {
