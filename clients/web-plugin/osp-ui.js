@@ -62,7 +62,7 @@
     state.rooms.forEach(room => {
       const item = document.createElement('div');
       item.className = 'osp-room-item';
-      item.innerHTML = `<div><div style="font-weight:bold">${room.name}</div><div style="font-size:10px; color:#888">${room.count} users</div></div><button class="osp-btn secondary">Join</button>`;
+      item.innerHTML = `<div><div style="font-weight:bold">${utils.escapeHtml(room.name)}</div><div style="font-size:10px; color:#888">${room.count} users</div></div><button class="osp-btn secondary">Join</button>`;
       item.onclick = () => {
         if (OSP.actions && OSP.actions.joinRoom) OSP.actions.joinRoom(room.id);
       };
@@ -98,10 +98,10 @@
         ? `<div style="width:120px;height:180px;border-radius:8px;background:#111 url('${imageUrl}') center/cover no-repeat;"></div>`
         : `<div style="width:120px;height:180px;border-radius:8px;background:#111;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;">No Cover</div>`;
       return `
-        <div class="osp-room-card" data-room-id="${room.id}" data-media-id="${room.media_id || ''}" style="display:flex;gap:12px;cursor:pointer;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);">
+        <div class="osp-room-card" data-room-id="${utils.escapeHtml(room.id)}" data-media-id="${utils.escapeHtml(room.media_id || '')}" style="display:flex;gap:12px;cursor:pointer;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);">
           ${cover}
           <div style="display:flex;flex-direction:column;gap:6px;">
-            <div style="font-weight:600;font-size:16px;">${room.name}</div>
+            <div style="font-weight:600;font-size:16px;">${utils.escapeHtml(room.name)}</div>
             <div style="font-size:12px;color:#aaa;">${room.count} participant${room.count > 1 ? 's' : ''}</div>
             <div style="font-size:12px;color:#69f0ae;">Join</div>
           </div>
@@ -157,7 +157,7 @@
       panel.innerHTML = `
         <div class="osp-header">
           <span style="color:#69f0ae">●</span>
-          <span style="flex-grow:1; margin-left:8px;">${state.roomName}</span>
+          <span style="flex-grow:1; margin-left:8px;">${utils.escapeHtml(state.roomName)}</span>
           <button class="osp-btn danger" id="osp-btn-leave">${state.isHost ? 'Close' : 'Leave'}</button>
         </div>
         <div class="osp-section">
