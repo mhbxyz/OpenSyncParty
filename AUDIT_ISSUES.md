@@ -89,7 +89,7 @@ const escapeHtml = (str) => {
 ---
 
 ### S3 - Pas de validation CORS
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P0` | **Effort**: `S`
 - **Fichiers**: `session-server-rust/src/main.rs`
 - **CVSS**: 7.5 (High)
@@ -807,7 +807,7 @@ tokio::spawn(async move {
 
 ### Phase 1 - Critiques (avant toute mise en production)
 1. [x] S2 - XSS (plus rapide à corriger, impact immédiat)
-2. [ ] S3 - CORS
+2. [x] S3 - CORS
 3. [ ] P6 - Mutex async
 4. [ ] S1 - Authentification JWT
 
@@ -844,3 +844,4 @@ tokio::spawn(async move {
 - 20 problèmes identifiés (11 sécurité, 9 performance)
 - 4 problèmes critiques P0
 - **S2 corrigé** : Ajout de `escapeHtml()` dans `osp-utils.js`, utilisé dans `osp-ui.js` pour échapper `room.name`, `room.id`, `room.media_id`, et `state.roomName`
+- **S3 corrigé** : Ajout de validation Origin pour WebSocket et CORS pour `/health`. Variable d'environnement `ALLOWED_ORIGINS` (défaut: `localhost:8096`)
