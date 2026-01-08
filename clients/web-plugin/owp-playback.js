@@ -233,10 +233,12 @@
         state.lastSentPosition = video.currentTime;
       }
       utils.log('HOST', { action, pos: video.currentTime, paused: video.paused });
-      actions.send('player_event', { action, position: video.currentTime });
-      // For play/pause, send immediate state_update (bypass normal throttle/ready checks)
+      // Include play_state in all events so CLIENT knows if HOST is playing
+      actions.send('player_event', { action, position: video.currentTime, play_state: video.paused ? 'paused' : 'playing' });
+      // For play/pause/seek, send immediate state_update (bypass normal throttle/ready checks)
       // This ensures CLIENT gets the play_state change ASAP
-      if (action === 'play' || action === 'pause') {
+      // For seek: CLIENT needs to know if HOST is playing so it can resume after seeking
+      if (action === 'play' || action === 'pause' || action === 'seek') {
         actions.send('state_update', { position: video.currentTime, play_state: video.paused ? 'paused' : 'playing' });
         state.lastStateSentAt = utils.nowMs();
       }

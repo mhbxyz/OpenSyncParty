@@ -319,9 +319,14 @@
             video.pause();
 
           } else if (msg.payload.action === 'seek') {
-            // Seek position was handled above, mark as paused until play event
-            state.lastSyncPlayState = 'paused';
-            // Don't clear cooldown - we'll get a play event soon and need protection
+            // Use play_state from message if available, otherwise assume paused
+            const hostPlayState = msg.payload.play_state || 'paused';
+            state.lastSyncPlayState = hostPlayState;
+            if (hostPlayState === 'playing') {
+              // HOST is playing after seek - resume playback
+              state.syncCooldownUntil = utils.nowMs() + 5000;
+              video.play().catch(() => {});
+            }
 
           } else if (msg.payload.action === 'buffering') {
             // Host is buffering - pause and wait for seek/play event

@@ -443,18 +443,19 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
 
                     // For state_update: filter out updates that are too frequent or have insignificant changes
                     if parsed.msg_type == "state_update" {
-                        // Ignore state_updates during command cooldown (HLS echo prevention)
-                        if room.last_command_ts > 0 && current_ts - room.last_command_ts < COMMAND_COOLDOWN_MS {
-                            return;
-                        }
-
                         if let Some(payload) = &parsed.payload {
                             let new_pos = payload.get("position").and_then(|v| v.as_f64()).unwrap_or(room.state.position);
                             let new_play_state = payload.get("play_state").and_then(|v| v.as_str()).unwrap_or(&room.state.play_state);
                             let play_state_changed = new_play_state != room.state.play_state;
                             let pos_diff = new_pos - room.state.position;
 
+                            // Always allow state_update if play_state changed (critical for sync)
+                            // Only apply cooldown/throttle for position-only updates
                             if !play_state_changed {
+                                // Ignore position-only updates during command cooldown (HLS echo prevention)
+                                if room.last_command_ts > 0 && current_ts - room.last_command_ts < COMMAND_COOLDOWN_MS {
+                                    return;
+                                }
                                 if current_ts - room.last_state_ts < MIN_STATE_UPDATE_INTERVAL_MS {
                                     return;
                                 }
