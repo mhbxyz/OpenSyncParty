@@ -1,3 +1,4 @@
+use crate::auth::Claims;
 use crate::messaging::{broadcast_room_list, broadcast_to_room, send_room_list, send_to_client};
 use crate::room::handle_leave;
 use crate::types::{Clients, PendingPlay, PlaybackState, Room, WsMessage};
@@ -14,7 +15,7 @@ const MIN_STATE_UPDATE_INTERVAL_MS: u64 = 500;
 const POSITION_JITTER_THRESHOLD: f64 = 0.5;
 const COMMAND_COOLDOWN_MS: u64 = 2000;
 
-pub async fn client_connection(ws: warp::ws::WebSocket, clients: Clients, rooms: crate::types::Rooms) {
+pub async fn client_connection(ws: warp::ws::WebSocket, clients: Clients, rooms: crate::types::Rooms, claims: Claims) {
     let (client_ws_sender, mut client_ws_rcv) = ws.split();
     let (client_sender, client_rcv) = mpsc::unbounded_channel();
     let client_rcv = UnboundedReceiverStream::new(client_rcv);
@@ -24,8 +25,13 @@ pub async fn client_connection(ws: warp::ws::WebSocket, clients: Clients, rooms:
     });
 
     let temp_id = uuid::Uuid::new_v4().to_string();
-    println!("[server] Client connected: {}", temp_id);
-    clients.write().await.insert(temp_id.clone(), crate::types::Client { sender: client_sender, room_id: None });
+    println!("[server] Client connected: {} (user: {}, name: {})", temp_id, claims.sub, claims.name);
+    clients.write().await.insert(temp_id.clone(), crate::types::Client {
+        sender: client_sender,
+        room_id: None,
+        user_id: claims.sub,
+        user_name: claims.name,
+    });
 
     {
         let locked_clients = clients.read().await;

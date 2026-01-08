@@ -41,9 +41,64 @@
     ui.render();
   };
 
-  const connect = () => {
+  const fetchAuthToken = async () => {
+    try {
+      // Get the Jellyfin API client
+      const apiClient = window.ApiClient;
+      if (!apiClient) {
+        console.warn('[OpenSyncParty] ApiClient not available, auth disabled');
+        return null;
+      }
+
+      // Build the token URL
+      const serverAddress = apiClient.serverAddress ? apiClient.serverAddress() : '';
+      const tokenUrl = `${serverAddress}/OpenSyncParty/Token`;
+
+      // Fetch with Jellyfin auth headers
+      const response = await fetch(tokenUrl, {
+        headers: {
+          'X-Emby-Token': apiClient.accessToken(),
+          'X-Emby-Authorization': apiClient._authorizationHeader || ''
+        }
+      });
+
+      if (!response.ok) {
+        console.warn('[OpenSyncParty] Failed to fetch auth token:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      state.authEnabled = data.auth_enabled || false;
+      state.userId = data.user_id || '';
+      state.userName = data.user_name || '';
+
+      if (data.auth_enabled && data.token) {
+        state.authToken = data.token;
+        console.log('[OpenSyncParty] Auth token obtained for user:', state.userName);
+        return data.token;
+      }
+
+      console.log('[OpenSyncParty] Server auth disabled, connecting without token');
+      return null;
+    } catch (err) {
+      console.warn('[OpenSyncParty] Error fetching auth token:', err);
+      return null;
+    }
+  };
+
+  const connect = async () => {
     if (state.ws) state.ws.close();
-    state.ws = new WebSocket(DEFAULT_WS_URL);
+
+    // Fetch auth token before connecting
+    const token = await fetchAuthToken();
+
+    // Build WebSocket URL with token if available
+    let wsUrl = DEFAULT_WS_URL;
+    if (token) {
+      wsUrl = `${DEFAULT_WS_URL}?token=${encodeURIComponent(token)}`;
+    }
+
+    state.ws = new WebSocket(wsUrl);
     state.ws.onopen = () => { ui.render(); };
     state.ws.onclose = () => { ui.render(); if (state.autoReconnect) setTimeout(connect, 3000); };
     state.ws.onmessage = (e) => {

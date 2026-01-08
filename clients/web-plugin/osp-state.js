@@ -53,6 +53,11 @@
     readyRoomId: '',
     isBuffering: false,
     wantsToPlay: false,
-    isSyncing: false
+    isSyncing: false,
+    // Authentication
+    authToken: null,
+    authEnabled: false,
+    userId: '',
+    userName: ''
   };
 })();

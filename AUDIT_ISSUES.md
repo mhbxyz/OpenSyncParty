@@ -18,7 +18,7 @@
 ## Problèmes de Sécurité
 
 ### S1 - Absence totale d'authentification
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P0` | **Effort**: `M`
 - **Fichiers**: `session-server-rust/src/ws.rs`, `session-server-rust/src/main.rs`
 - **CVSS**: 9.1 (Critical)
@@ -809,7 +809,7 @@ tokio::spawn(async move {
 1. [x] S2 - XSS (plus rapide à corriger, impact immédiat)
 2. [x] S3 - CORS
 3. [x] P6 - Mutex async
-4. [ ] S1 - Authentification JWT
+4. [x] S1 - Authentification JWT
 
 ### Phase 2 - Élevées
 5. [ ] S4 - JwtSecret
