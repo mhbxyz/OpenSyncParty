@@ -28,6 +28,14 @@
       panel.id = OWP.constants.PANEL_ID;
       panel.className = 'hide';
       document.body.appendChild(panel);
+
+      // Prevent all events from propagating to the video player
+      const stopPropagation = (e) => e.stopPropagation();
+      panel.addEventListener('click', stopPropagation);
+      panel.addEventListener('mousedown', stopPropagation);
+      panel.addEventListener('keydown', stopPropagation);
+      panel.addEventListener('keyup', stopPropagation);
+      panel.addEventListener('keypress', stopPropagation);
     }
     if (OWP.actions && OWP.actions.connect) OWP.actions.connect();
 

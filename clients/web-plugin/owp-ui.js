@@ -185,9 +185,34 @@
     });
   };
 
-  const render = () => {
+  // Prevent video player from capturing keyboard events in our inputs
+  const stopPlayerCapture = (input) => {
+    const stopPropagation = (e) => e.stopPropagation();
+    input.addEventListener('keydown', stopPropagation);
+    input.addEventListener('keyup', stopPropagation);
+    input.addEventListener('keypress', stopPropagation);
+    // Prevent click from triggering video play/pause
+    input.addEventListener('click', stopPropagation);
+    input.addEventListener('mousedown', stopPropagation);
+  };
+
+  const render = (forceFullRender = false) => {
     const panel = document.getElementById(PANEL_ID);
     if (!panel) return;
+
+    // Preserve input value if it exists and we're not forcing a full render
+    const existingInput = document.getElementById('owp-new-room-name');
+    const savedValue = existingInput ? existingInput.value : '';
+    const hadFocus = existingInput && document.activeElement === existingInput;
+
+    // Skip full re-render if panel structure exists and state hasn't changed
+    if (!forceFullRender && panel.dataset.inRoom === String(state.inRoom) && panel.children.length > 0) {
+      updateStatusIndicator();
+      updateRoomListUI();
+      renderHomeWatchParties();
+      return;
+    }
+    panel.dataset.inRoom = String(state.inRoom);
 
     if (!state.inRoom) {
       panel.innerHTML = `
@@ -207,6 +232,15 @@
       `;
       const btn = panel.querySelector('#owp-btn-create');
       if (btn) btn.onclick = () => OWP.actions && OWP.actions.createRoom && OWP.actions.createRoom();
+
+      // Restore input value and setup keyboard capture prevention
+      const newInput = document.getElementById('owp-new-room-name');
+      if (newInput) {
+        stopPlayerCapture(newInput);
+        if (savedValue) newInput.value = savedValue;
+        if (hadFocus) newInput.focus();
+      }
+
       updateRoomListUI();
     } else {
       panel.innerHTML = `
@@ -244,7 +278,7 @@
       e.stopPropagation(); e.preventDefault();
       const panel = document.getElementById(PANEL_ID);
       panel.classList.toggle('hide');
-      if (!panel.classList.contains('hide')) render();
+      if (!panel.classList.contains('hide')) render(true); // Force full render on first open
     };
     buttonsContainer.insertBefore(btn, buttonsContainer.firstChild);
   };
