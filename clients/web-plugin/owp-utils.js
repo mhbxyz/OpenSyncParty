@@ -108,6 +108,7 @@
    * Structured debug logging for sync analysis.
    * Format: [OWP:{CATEGORY}] key=value key=value ...
    * Categories: CLOCK, HOST, CLIENT, SYNC, VIDEO
+   * Logs are also forwarded to the session server via WebSocket.
    */
   const log = (category, data) => {
     const parts = Object.entries(data).map(([k, v]) => {
@@ -126,7 +127,21 @@
       }
       return `${k}=${v}`;
     });
-    console.log(`[OWP:${category}] ${parts.join(' ')}`);
+    const message = parts.join(' ');
+    console.log(`[OWP:${category}] ${message}`);
+
+    // Forward to session server via WebSocket (if connected)
+    if (state.ws && state.ws.readyState === 1) {
+      try {
+        state.ws.send(JSON.stringify({
+          type: 'client_log',
+          payload: { category, message },
+          ts: nowMs()
+        }));
+      } catch (e) {
+        // Ignore send errors (connection may be closing)
+      }
+    }
   };
 
   OWP.utils = {

@@ -193,6 +193,10 @@
           utils.startSyncing();
           if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
             video.currentTime = targetPos;
+            // Update sync state to match our seek target - prevents drift chase
+            // after buffering (otherwise syncLoop sees drift from old server_ts)
+            state.lastSyncServerTs = utils.getServerNow();
+            state.lastSyncPosition = targetPos;
           }
           if (msg.payload.state.play_state === 'playing') {
             video.play().catch(() => {});
@@ -254,17 +258,16 @@
           }
           if (msg.payload.action === 'play') {
             state.lastSyncPlayState = 'playing';
-            const serverNow = utils.getServerNow();
-            const delay = typeof targetServerTs === 'number' ? targetServerTs - serverNow : 0;
-            if (delay > 0) {
-              utils.scheduleAt(targetServerTs, () => video.play().catch(() => {}));
-            } else {
-              const timeLost = Math.abs(delay) / 1000;
-              if (typeof msg.payload.position === 'number') {
-                video.currentTime = msg.payload.position + timeLost;
-              }
-              video.play().catch(() => {});
+            // Play immediately - don't wait for scheduled time
+            // The host is already playing, waiting would only increase drift
+            const expectedPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
+            if (Math.abs(video.currentTime - expectedPos) > SEEK_THRESHOLD) {
+              video.currentTime = expectedPos;
+              // Update sync state to match our seek - prevents drift chase after buffering
+              state.lastSyncServerTs = utils.getServerNow();
+              state.lastSyncPosition = expectedPos;
             }
+            video.play().catch(() => {});
           } else if (msg.payload.action === 'pause') {
             state.lastSyncPlayState = 'paused';
             utils.scheduleAt(targetServerTs, () => video.pause());
@@ -273,6 +276,9 @@
             utils.scheduleAt(targetServerTs, () => {
               if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
                 video.currentTime = targetPos;
+                // Update sync state to match our seek - prevents drift chase after buffering
+                state.lastSyncServerTs = utils.getServerNow();
+                state.lastSyncPosition = targetPos;
               }
             });
           }

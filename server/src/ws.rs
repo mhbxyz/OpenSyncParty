@@ -517,6 +517,15 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                 server_ts: Some(now_ms()),
             });
         },
+        "client_log" => {
+            // Forward client logs to server stdout for debugging
+            if let Some(payload) = &parsed.payload {
+                let category = payload.get("category").and_then(|v| v.as_str()).unwrap_or("LOG");
+                let message = payload.get("message").and_then(|v| v.as_str()).unwrap_or("");
+                let short_id = &client_id[..8];
+                info!("[CLIENT:{}:{}] {}", short_id, category, message);
+            }
+        },
         other => {
             debug!("Unknown message type '{}' from {}", other, client_id);
         }
