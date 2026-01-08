@@ -276,12 +276,17 @@
         utils.startSyncing();
 
         if (msg.payload && typeof msg.payload.position === 'number') {
-          const targetPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
+          const action = msg.payload.action;
+          // For seek/buffering: use exact HOST position (both should start at same point)
+          // For play: use adjusted position to compensate for network latency
+          const targetPos = (action === 'seek' || action === 'buffering')
+            ? msg.payload.position
+            : utils.adjustedPosition(msg.payload.position, msg.server_ts);
           const serverNow = utils.getServerNow();
           const gap = targetPos - video.currentTime;
 
           utils.log('CLIENT', {
-            action: msg.payload.action,
+            action,
             msg_pos: msg.payload.position,
             target_pos: targetPos,
             video_pos: video.currentTime,
