@@ -6,9 +6,16 @@ mod utils;
 mod ws;
 
 use std::sync::Arc;
+use std::time::Duration;
+use log::{info, warn};
 use warp::Filter;
 use crate::auth::JwtConfig;
 use crate::types::{Clients, Rooms};
+use crate::utils::now_ms;
+
+// Zombie connection detection
+const ZOMBIE_CHECK_INTERVAL_SECS: u64 = 30;
+const ZOMBIE_TIMEOUT_MS: u64 = 60_000;  // 60 seconds without message = zombie
 
 fn get_allowed_origins() -> Vec<String> {
     std::env::var("ALLOWED_ORIGINS")
@@ -28,14 +35,48 @@ fn is_origin_allowed(origin: &str, allowed: &[String]) -> bool {
 
 #[tokio::main]
 async fn main() {
+    // Initialize logger with default level INFO (can override with RUST_LOG env var)
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or("info")
+    ).init();
+
     let jwt_config = Arc::new(JwtConfig::from_env());
     let allowed_origins = get_allowed_origins();
 
-    println!("[server] Allowed origins: {:?}", allowed_origins);
-    println!("[server] JWT authentication: {}", if jwt_config.enabled { "ENABLED" } else { "DISABLED" });
+    info!("Allowed origins: {:?}", allowed_origins);
+    info!("JWT authentication: {}", if jwt_config.enabled { "ENABLED" } else { "DISABLED" });
 
     let clients: Clients = Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new()));
     let rooms: Rooms = Arc::new(tokio::sync::RwLock::new(std::collections::HashMap::new()));
+
+    // Spawn zombie connection cleanup task
+    {
+        let clients_clone = clients.clone();
+        let rooms_clone = rooms.clone();
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(Duration::from_secs(ZOMBIE_CHECK_INTERVAL_SECS)).await;
+                let now = now_ms();
+                let mut zombies = Vec::new();
+
+                // Find zombie clients
+                {
+                    let locked_clients = clients_clone.read().await;
+                    for (id, client) in locked_clients.iter() {
+                        if now - client.last_seen > ZOMBIE_TIMEOUT_MS {
+                            zombies.push(id.clone());
+                        }
+                    }
+                }
+
+                // Disconnect zombies
+                for id in zombies {
+                    warn!("Removing zombie connection: {}", id);
+                    room::handle_disconnect(&id, &clients_clone, &rooms_clone).await;
+                }
+            }
+        });
+    }
 
     let clients_filter = warp::any().map(move || clients.clone());
     let rooms_filter = warp::any().map(move || rooms.clone());
@@ -56,7 +97,7 @@ async fn main() {
             match origin {
                 Some(ref o) if is_origin_allowed(o, &allowed) => Ok(()),
                 Some(o) => {
-                    eprintln!("[server] Rejected connection from origin: {}", o);
+                    warn!("Rejected connection from origin: {}", o);
                     Err(warp::reject::custom(OriginRejected))
                 }
                 None => Ok(()), // Allow connections without Origin header (non-browser clients)
@@ -91,13 +132,13 @@ async fn main() {
                     match jwt_config.validate_token(&token) {
                         Ok(claims) => Ok(claims),
                         Err(e) => {
-                            eprintln!("[server] JWT validation failed: {}", e);
+                            warn!("JWT validation failed: {}", e);
                             Err(warp::reject::custom(AuthRejected))
                         }
                     }
                 }
                 None => {
-                    eprintln!("[server] Missing token in WebSocket connection");
+                    warn!("Missing token in WebSocket connection");
                     Err(warp::reject::custom(AuthRejected))
                 }
             }
@@ -133,7 +174,7 @@ async fn main() {
 
     let routes = ws_route.or(health_route);
 
-    println!("OpenSyncParty Rust Server running on 0.0.0.0:3000");
+    info!("OpenSyncParty server listening on 0.0.0.0:3000");
     warp::serve(routes).run(([0, 0, 0, 0], 3000)).await;
 }
 

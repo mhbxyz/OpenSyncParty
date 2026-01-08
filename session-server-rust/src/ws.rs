@@ -4,6 +4,7 @@ use crate::room::handle_leave;
 use crate::types::{Clients, PendingPlay, PlaybackState, Room, WsMessage};
 use crate::utils::now_ms;
 use futures::StreamExt;
+use log::{debug, info, warn};
 use std::collections::HashSet;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -23,6 +24,17 @@ const RATE_LIMIT_WINDOW_MS: u64 = 1000;  // Window size in ms
 const MAX_ROOMS_PER_USER: usize = 3;  // Max rooms a user can host
 const MAX_CLIENTS_PER_ROOM: usize = 20;  // Max clients in a room
 
+// Payload validation
+const MAX_POSITION_SECONDS: f64 = 86400.0;  // 24 hours max
+
+fn is_valid_position(pos: f64) -> bool {
+    pos.is_finite() && pos >= 0.0 && pos <= MAX_POSITION_SECONDS
+}
+
+fn is_valid_play_state(state: &str) -> bool {
+    state == "playing" || state == "paused"
+}
+
 pub async fn client_connection(ws: warp::ws::WebSocket, clients: Clients, rooms: crate::types::Rooms, claims: Claims) {
     let (client_ws_sender, mut client_ws_rcv) = ws.split();
     let (client_sender, client_rcv) = mpsc::unbounded_channel();
@@ -33,14 +45,16 @@ pub async fn client_connection(ws: warp::ws::WebSocket, clients: Clients, rooms:
     });
 
     let temp_id = uuid::Uuid::new_v4().to_string();
-    println!("[server] Client connected: {} (user: {}, name: {})", temp_id, claims.sub, claims.name);
+    let now = now_ms();
+    info!("Client connected: {} (user: {}, name: {})", temp_id, claims.sub, claims.name);
     clients.write().await.insert(temp_id.clone(), crate::types::Client {
         sender: client_sender,
         room_id: None,
         user_id: claims.sub,
         user_name: claims.name,
         message_count: 0,
-        last_reset: now_ms(),
+        last_reset: now,
+        last_seen: now,
     });
 
     {
@@ -129,6 +143,8 @@ async fn check_rate_limit(client_id: &str, clients: &Clients) -> bool {
     let mut locked_clients = clients.write().await;
     if let Some(client) = locked_clients.get_mut(client_id) {
         let now = now_ms();
+        // Update last_seen for zombie detection
+        client.last_seen = now;
         // Reset counter if window has passed
         if now - client.last_reset > RATE_LIMIT_WINDOW_MS {
             client.message_count = 0;
@@ -145,20 +161,22 @@ async fn check_rate_limit(client_id: &str, clients: &Clients) -> bool {
 async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, rooms: &crate::types::Rooms) {
     // Rate limiting check
     if check_rate_limit(client_id, clients).await {
-        eprintln!("[server] Rate limited client: {}", client_id);
+        warn!("Rate limited client: {}", client_id);
         return;
     }
 
     let msg_str = if let Ok(s) = msg.to_str() { s } else { return };
-    println!("[server] Received from {}: {}", client_id, msg_str);
 
     let mut parsed: WsMessage = match serde_json::from_str(msg_str) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("[server] JSON error: {}", e);
+            warn!("JSON parse error from {}: {}", client_id, e);
             return;
         }
     };
+
+    // Log message type only (not full payload for privacy)
+    debug!("Message from {}: {}", client_id, parsed.msg_type);
 
     match parsed.msg_type.as_str() {
         "list_rooms" => {
@@ -188,10 +206,11 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
 
                 let room_name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("New Room").to_string();
                 let room_id = uuid::Uuid::new_v4().to_string();
-                let start_pos = payload.get("start_pos").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let raw_start_pos = payload.get("start_pos").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let start_pos = if is_valid_position(raw_start_pos) { raw_start_pos } else { 0.0 };
                 let media_id = payload.get("media_id").and_then(|v| v.as_str()).map(|v| v.to_string());
 
-                println!("[server] Creating room '{}' ({}) for {}", room_name, room_id, client_id);
+                info!("Creating room '{}' ({}) for {}", room_name, room_id, client_id);
 
                 let room = Room {
                     room_id: room_id.clone(),
@@ -247,7 +266,7 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                         return;
                     }
 
-                    println!("[server] Client {} joining room {}", client_id, room_id);
+                    info!("Client {} joining room {}", client_id, room_id);
                     if !room.clients.contains(&client_id.to_string()) {
                         room.clients.push(client_id.to_string());
                     }
@@ -291,7 +310,7 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
             }
         },
         "leave_room" => {
-            println!("[server] Client {} requested leave", client_id);
+            info!("Client {} leaving room", client_id);
             {
                 let mut locked_clients = clients.write().await;
                 let mut locked_rooms = rooms.write().await;
@@ -339,8 +358,18 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                     }
 
                     if let Some(payload) = &parsed.payload {
-                        if let Some(pos) = payload.get("position").and_then(|v| v.as_f64()) { room.state.position = pos; }
-                        if let Some(st) = payload.get("play_state").and_then(|v| v.as_str()) { room.state.play_state = st.to_string(); }
+                        // Validate and update position
+                        if let Some(pos) = payload.get("position").and_then(|v| v.as_f64()) {
+                            if is_valid_position(pos) {
+                                room.state.position = pos;
+                            }
+                        }
+                        // Validate and update play_state
+                        if let Some(st) = payload.get("play_state").and_then(|v| v.as_str()) {
+                            if is_valid_play_state(st) {
+                                room.state.play_state = st.to_string();
+                            }
+                        }
                         if parsed.msg_type == "player_event" {
                              if let Some(action) = payload.get("action").and_then(|v| v.as_str()) {
                                  if action == "play" { room.state.play_state = "playing".to_string(); }
@@ -356,7 +385,8 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                         room.last_command_ts = current_ts;
 
                         if action == "play" {
-                            let position = parsed.payload.as_ref().and_then(|p| p.get("position")).and_then(|v| v.as_f64()).unwrap_or(room.state.position);
+                            let raw_position = parsed.payload.as_ref().and_then(|p| p.get("position")).and_then(|v| v.as_f64()).unwrap_or(room.state.position);
+                            let position = if is_valid_position(raw_position) { raw_position } else { room.state.position };
                             if all_ready(room) {
                                 let target_server_ts = now_ms() + PLAY_SCHEDULE_MS;
                                 broadcast_scheduled_play(room, clients, position, target_server_ts).await;

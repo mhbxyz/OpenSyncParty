@@ -1,10 +1,11 @@
 use crate::messaging::{broadcast_room_list, broadcast_to_room};
 use crate::types::{Client, Clients, Room, Rooms, WsMessage};
 use crate::utils::now_ms;
+use log::info;
 use std::collections::HashMap;
 
 pub async fn handle_disconnect(client_id: &str, clients: &Clients, rooms: &Rooms) {
-    println!("[server] Disconnecting client {}", client_id);
+    info!("Disconnecting client {}", client_id);
     {
         let mut locked_clients = clients.write().await;
         let mut locked_rooms = rooms.write().await;
@@ -45,7 +46,7 @@ pub fn handle_leave(client_id: &str, clients: &mut HashMap<String, Client>, room
     }
 
     if let Some(room_id) = room_to_remove {
-        println!("[server] Closing room {}", room_id);
+        info!("Closing room {}", room_id);
         rooms.remove(&room_id);
         let msg_json = serde_json::json!({"type": "room_closed"}).to_string();
         for cid in clients_to_notify {

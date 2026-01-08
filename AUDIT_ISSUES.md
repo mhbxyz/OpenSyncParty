@@ -222,7 +222,7 @@ if locked_rooms.len() >= MAX_ROOMS {
 ---
 
 ### S7 - Pas de validation des payloads
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P2` | **Effort**: `S`
 - **Fichiers**: `session-server-rust/src/ws.rs`
 
@@ -353,7 +353,7 @@ send_to_client(client_id, &locked_clients, &WsMessage {
 ## Problèmes de Performance
 
 ### P1 - Chargement séquentiel des scripts
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P2` | **Effort**: `M`
 - **Fichiers**: `clients/web-plugin/plugin.js`
 
@@ -692,7 +692,7 @@ Alternative: Utiliser `Bytes` pour zero-copy.
 ---
 
 ### P8 - Logs verbeux en production
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P2` | **Effort**: `S`
 - **Fichiers**: `session-server-rust/src/ws.rs`
 
@@ -730,7 +730,7 @@ En production, lancer avec `RUST_LOG=info`.
 ---
 
 ### P9 - Pas de détection des connexions zombies
-- [ ] **À corriger**
+- [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P2` | **Effort**: `M`
 - **Fichiers**: `session-server-rust/src/ws.rs`
 
@@ -819,10 +819,10 @@ tokio::spawn(async move {
 9. [x] P4 - Fuites mémoire (cleanup listeners)
 
 ### Phase 3 - Moyennes
-10. [ ] S7 - Validation payloads
-11. [ ] P1 - Bundle JS
-12. [ ] P8 - Logs
-13. [ ] P9 - Connexions zombies
+10. [x] S7 - Validation payloads (position 0-86400s, play_state playing/paused)
+11. [x] P1 - Chargement JS parallèle (ui+playback en parallèle)
+12. [x] P8 - Logs avec env_logger (RUST_LOG=info|debug|warn)
+13. [x] P9 - Zombie cleanup (60s timeout, check toutes les 30s)
 
 ### Phase 4 - Faibles
 14. [ ] S8 - Logs sensibles
@@ -852,3 +852,7 @@ tokio::spawn(async move {
 - **S6 corrigé** : Limite 3 rooms par utilisateur, 20 clients par room
 - **P2 corrigé** : Intervalles optimisés (ping 10s, home refresh 5s, sync 500ms). Exécution conditionnelle (sync loop seulement si en room et non-host)
 - **P4 corrigé** : Tracking des listeners vidéo pour cleanup. Nettoyage automatique quand l'élément vidéo change. Fonction `cleanup()` exportée
+- **S7 corrigé** : Validation position (0-86400s, finite) et play_state (playing/paused uniquement)
+- **P1 corrigé** : Chargement parallèle des scripts (ui+playback en parallèle)
+- **P8 corrigé** : Migration vers log/env_logger. Logs par niveau (RUST_LOG=info par défaut). Messages privés en debug uniquement
+- **P9 corrigé** : Détection zombies avec last_seen timestamp. Cleanup toutes les 30s, timeout 60s

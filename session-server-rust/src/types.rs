@@ -14,6 +14,7 @@ pub struct Client {
     pub user_name: String,
     pub message_count: u32,
     pub last_reset: u64,
+    pub last_seen: u64,  // For zombie connection detection
 }
 
 #[derive(Debug, Clone, Serialize)]
