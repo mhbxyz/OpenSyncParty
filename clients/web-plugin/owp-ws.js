@@ -89,8 +89,11 @@
   const connect = async () => {
     if (state.ws) state.ws.close();
 
-    // Fetch auth token before connecting
-    const token = await fetchAuthToken();
+    // Reuse existing token if we have one (avoid rate limiting on reconnects)
+    let token = state.authToken;
+    if (!token) {
+      token = await fetchAuthToken();
+    }
 
     // Connect without token in URL (security: avoid token in logs/history)
     const wsUrl = DEFAULT_WS_URL;

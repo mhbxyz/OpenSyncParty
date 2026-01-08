@@ -20,8 +20,8 @@ public class OpenWatchPartyController : ControllerBase
 {
     private readonly ILogger<OpenWatchPartyController> _logger;
 
-    // Rate limiting: max 10 tokens per minute per user
-    private const int MaxTokensPerMinute = 10;
+    // Rate limiting: max 30 tokens per minute per user (allows for reconnections)
+    private const int MaxTokensPerMinute = 30;
     private static readonly ConcurrentDictionary<string, (int Count, DateTime ResetTime)> TokenRateLimits = new();
 
     // Cache for embedded script content (read once at startup)
