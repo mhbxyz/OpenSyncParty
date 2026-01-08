@@ -104,6 +104,31 @@
     return div.innerHTML;
   };
 
+  /**
+   * Structured debug logging for sync analysis.
+   * Format: [OWP:{CATEGORY}] key=value key=value ...
+   * Categories: CLOCK, HOST, CLIENT, SYNC, VIDEO
+   */
+  const log = (category, data) => {
+    const parts = Object.entries(data).map(([k, v]) => {
+      if (typeof v === 'number') {
+        // Format numbers: positions as Xs, timestamps as ms, rates as Xx
+        if (k.includes('pos') || k === 'actual' || k === 'expected' || k === 'drift') {
+          return `${k}=${v.toFixed(2)}s`;
+        }
+        if (k === 'rate') {
+          return `${k}=${v.toFixed(2)}x`;
+        }
+        if (k.includes('offset') || k.includes('delay') || k.includes('rtt')) {
+          return `${k}=${v >= 0 ? '+' : ''}${Math.round(v)}ms`;
+        }
+        return `${k}=${v}`;
+      }
+      return `${k}=${v}`;
+    });
+    console.log(`[OWP:${category}] ${parts.join(' ')}`);
+  };
+
   OWP.utils = {
     nowMs,
     shouldSend,
@@ -121,6 +146,7 @@
     getServerNow,
     adjustedPosition,
     scheduleAt,
-    escapeHtml
+    escapeHtml,
+    log
   };
 })();

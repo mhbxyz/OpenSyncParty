@@ -182,6 +182,14 @@
         if (video && !state.isHost && msg.payload && msg.payload.state) {
           const basePos = msg.payload.state.position || 0;
           const targetPos = utils.adjustedPosition(basePos, msg.server_ts);
+          utils.log('CLIENT', {
+            type: 'room_state',
+            msg_pos: basePos,
+            target_pos: targetPos,
+            video_pos: video.currentTime,
+            gap: targetPos - video.currentTime,
+            play_state: msg.payload.state.play_state
+          });
           utils.startSyncing();
           if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
             video.currentTime = targetPos;
@@ -224,6 +232,16 @@
         utils.startSyncing();
         if (msg.payload && typeof msg.payload.position === 'number') {
           const targetPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
+          const serverNow = utils.getServerNow();
+          const msgDelay = serverNow - msg.server_ts;
+          utils.log('CLIENT', {
+            action: msg.payload.action,
+            msg_pos: msg.payload.position,
+            target_pos: targetPos,
+            video_pos: video.currentTime,
+            gap: targetPos - video.currentTime,
+            msg_delay: msgDelay
+          });
           if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
             video.currentTime = targetPos;
           }
@@ -263,24 +281,22 @@
         
       case 'state_update':
         if (state.isHost || !video) return;
-        if (msg.payload && typeof msg.payload.position === 'number') {
-          const targetPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
-          if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
-            utils.startSyncing();
-            video.currentTime = targetPos;
-          }
+        // Always update sync state (so syncLoop has accurate data)
+        if (msg.payload) {
+          state.lastSyncServerTs = msg.server_ts || utils.getServerNow();
+          state.lastSyncPosition = msg.payload.position || state.lastSyncPosition;
+          state.lastSyncPlayState = msg.payload.play_state || state.lastSyncPlayState;
         }
+        // Don't adjust play state while buffering
+        if (state.isBuffering || !utils.isVideoReady()) return;
+        // Only handle play/pause state - let syncLoop handle position drift
+        // (syncLoop uses playback rate adjustment for smooth catch-up)
         if (msg.payload.play_state === 'playing' && video.paused) {
           utils.startSyncing();
           video.play().catch(() => {});
         } else if (msg.payload.play_state === 'paused' && !video.paused) {
           utils.startSyncing();
           video.pause();
-        }
-        if (msg.payload) {
-          state.lastSyncServerTs = msg.server_ts || utils.getServerNow();
-          state.lastSyncPosition = msg.payload.position || state.lastSyncPosition;
-          state.lastSyncPlayState = msg.payload.play_state || state.lastSyncPlayState;
         }
         break;
 
@@ -292,10 +308,15 @@
           if (latEl) latEl.textContent = `${rtt} ms`;
           if (typeof msg.server_ts === 'number' && rtt > 0) {
             const sampleOffset = msg.server_ts + (rtt / 2) - now;
+            const prevOffset = state.serverOffsetMs;
             state.serverOffsetMs = state.hasTimeSync
               ? (state.serverOffsetMs * 0.6 + sampleOffset * 0.4)
               : sampleOffset;
             state.hasTimeSync = true;
+            // Log clock sync periodically (every ~10 pings to reduce noise)
+            if (Math.random() < 0.1) {
+              utils.log('CLOCK', { rtt, server_offset: state.serverOffsetMs, delta: state.serverOffsetMs - prevOffset });
+            }
           }
         }
         break;

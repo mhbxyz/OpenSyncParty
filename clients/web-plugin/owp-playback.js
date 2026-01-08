@@ -143,6 +143,7 @@
         state.lastSeekSentAt = now;
         state.lastSentPosition = video.currentTime;
       }
+      utils.log('HOST', { action, pos: video.currentTime, paused: video.paused });
       actions.send('player_event', { action, position: video.currentTime });
       if (action === 'play' || action === 'pause') {
         sendStateUpdate();
@@ -151,12 +152,26 @@
 
     // Create named listeners for cleanup
     const listeners = {
-      waiting: () => { state.isBuffering = true; },
-      canplay: () => { state.isBuffering = false; },
-      playing: () => { state.isBuffering = false; },
+      waiting: () => {
+        state.isBuffering = true;
+        utils.log('VIDEO', { event: 'buffering', pos: video.currentTime, readyState: video.readyState });
+      },
+      canplay: () => {
+        const wasBuffering = state.isBuffering;
+        state.isBuffering = false;
+        if (wasBuffering) utils.log('VIDEO', { event: 'ready', pos: video.currentTime, readyState: video.readyState });
+      },
+      playing: () => {
+        const wasBuffering = state.isBuffering;
+        state.isBuffering = false;
+        if (wasBuffering) utils.log('VIDEO', { event: 'playing', pos: video.currentTime });
+      },
       play: () => onEvent('play'),
       pause: () => onEvent('pause'),
-      seeked: () => onEvent('seek')
+      seeked: () => {
+        utils.log('VIDEO', { event: 'seeked', pos: video.currentTime });
+        onEvent('seek');
+      }
     };
     state.videoListeners = listeners;
 
@@ -224,8 +239,13 @@
       return;
     }
     if (abs >= DRIFT_SOFT_MAX_SEC) {
+      utils.log('SYNC', { type: 'HARD_SEEK', expected, actual: video.currentTime, drift });
       utils.suppress();
       video.currentTime = expected;
+      // Update sync state to our new position - prevents drift chase loop
+      // (otherwise next iteration sees even more drift from old sync state)
+      state.lastSyncServerTs = serverNow;
+      state.lastSyncPosition = expected;
       if (video.playbackRate !== 1) video.playbackRate = 1;
       return;
     }
@@ -234,6 +254,10 @@
     const sign = drift > 0 ? 1 : -1;
     const correction = sign * Math.sqrt(abs) * DRIFT_GAIN;
     const rate = Math.min(Math.max(1 + correction, PLAYBACK_RATE_MIN), PLAYBACK_RATE_MAX);
+    // Log only when drift is significant (> 0.5s) to reduce noise
+    if (abs > 0.5) {
+      utils.log('SYNC', { expected, actual: video.currentTime, drift, rate });
+    }
     video.playbackRate = rate;
   };
 
