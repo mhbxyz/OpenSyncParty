@@ -2,7 +2,7 @@
   const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
   if (OWP.ui) return;
 
-  const { PANEL_ID, BTN_ID, STYLE_ID, HOME_SECTION_ID, DEFAULT_WS_URL } = OWP.constants;
+  const { PANEL_ID, BTN_ID, STYLE_ID, HOME_SECTION_ID, DEFAULT_WS_URL, QUALITY_PRESETS } = OWP.constants;
   const state = OWP.state;
   const utils = OWP.utils;
 
@@ -39,6 +39,19 @@
         background: #000; color: #fff; box-sizing: border-box; margin-bottom: 10px; font-size: 14px;
       }
       .owp-footer { font-size: 10px; color: #555; text-align: center; margin-top: auto; padding-top: 10px; }
+      .owp-select {
+        width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #444;
+        background: #000; color: #fff; box-sizing: border-box; font-size: 13px;
+        cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888'%3E%3Cpath d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center;
+      }
+      .owp-select:focus { border-color: #1565c0; outline: none; }
+      .owp-checkbox-row {
+        display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #aaa;
+      }
+      .owp-checkbox-row input { accent-color: #388e3c; }
+      .owp-quality-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #333; }
     `;
     document.head.appendChild(style);
   };
@@ -185,6 +198,55 @@
     });
   };
 
+  /**
+   * Build quality selector HTML (host only)
+   */
+  const buildQualitySelector = () => {
+    if (!state.isHost || !state.quality.allowHostControl) return '';
+
+    const currentPreset = state.quality.currentPreset || 'auto';
+    const directPlayChecked = state.quality.preferDirectPlay ? 'checked' : '';
+
+    let options = '';
+    for (const [key, preset] of Object.entries(QUALITY_PRESETS)) {
+      const selected = key === currentPreset ? 'selected' : '';
+      options += `<option value="${key}" ${selected}>${preset.label}</option>`;
+    }
+
+    return `
+      <div class="owp-quality-section">
+        <div class="owp-label">Quality Control</div>
+        <select class="owp-select" id="owp-quality-select">${options}</select>
+        <label class="owp-checkbox-row">
+          <input type="checkbox" id="owp-direct-play" ${directPlayChecked} />
+          Prefer Direct Play (no transcoding)
+        </label>
+      </div>
+    `;
+  };
+
+  /**
+   * Build quality display for guests (read-only)
+   */
+  const buildQualityDisplay = () => {
+    if (state.isHost) return '';
+
+    const quality = state.roomQuality || state.quality;
+    const preset = quality.preset || 'auto';
+    const presetInfo = QUALITY_PRESETS[preset] || QUALITY_PRESETS.auto;
+    const directPlay = quality.preferDirectPlay ? 'Yes' : 'No';
+
+    return `
+      <div class="owp-quality-section">
+        <div class="owp-label">Quality (set by host)</div>
+        <div style="font-size:12px;color:#aaa;">
+          <div>Bitrate: ${presetInfo.label}</div>
+          <div>Direct Play: ${directPlay}</div>
+        </div>
+      </div>
+    `;
+  };
+
   // Prevent video player from capturing keyboard events in our inputs
   const stopPlayerCapture = (input) => {
     const stopPropagation = (e) => e.stopPropagation();
@@ -199,11 +261,6 @@
   const render = (forceFullRender = false) => {
     const panel = document.getElementById(PANEL_ID);
     if (!panel) return;
-
-    // Preserve input value if it exists and we're not forcing a full render
-    const existingInput = document.getElementById('owp-new-room-name');
-    const savedValue = existingInput ? existingInput.value : '';
-    const hadFocus = existingInput && document.activeElement === existingInput;
 
     // Skip full re-render if panel structure exists and state hasn't changed
     if (!forceFullRender && panel.dataset.inRoom === String(state.inRoom) && panel.children.length > 0) {
@@ -223,26 +280,16 @@
               <div id="owp-room-list"></div>
             </div>
             <div class="owp-section" style="border-top: 1px solid #333; padding-top: 15px;">
-              <div class="owp-label">Create a Room</div>
-              <input class="owp-input" id="owp-new-room-name" type="text" placeholder="e.g. Movie Night" />
-              <button class="owp-btn" style="width:100%" id="owp-btn-create">Create & Host</button>
+              <button class="owp-btn" style="width:100%" id="owp-btn-create">Create Room</button>
             </div>
         </div>
         <div class="owp-footer">Server: ${DEFAULT_WS_URL.replace(/^wss?:\/\//, '').replace('/ws', '')}</div>
       `;
       const btn = panel.querySelector('#owp-btn-create');
       if (btn) btn.onclick = () => OWP.actions && OWP.actions.createRoom && OWP.actions.createRoom();
-
-      // Restore input value and setup keyboard capture prevention
-      const newInput = document.getElementById('owp-new-room-name');
-      if (newInput) {
-        stopPlayerCapture(newInput);
-        if (savedValue) newInput.value = savedValue;
-        if (hadFocus) newInput.focus();
-      }
-
       updateRoomListUI();
     } else {
+      const qualitySection = state.isHost ? buildQualitySelector() : buildQualityDisplay();
       panel.innerHTML = `
         <div class="owp-header">
           <span style="color:#69f0ae">●</span>
@@ -253,6 +300,7 @@
           <div class="owp-label">Participants</div>
           <div id="owp-participants-list" style="font-size:13px;">Online: ${state.participantCount || 1}</div>
         </div>
+        ${qualitySection}
         <div class="owp-meta" style="font-size:10px; color:#666; display:flex; justify-content:space-between;">
             <span>RTT: <span class="owp-latency">-</span></span>
             <span>ID: ${state.clientId.split('-')[1] || '...'}</span>
@@ -260,6 +308,30 @@
       `;
       const leaveBtn = panel.querySelector('#owp-btn-leave');
       if (leaveBtn) leaveBtn.onclick = () => OWP.actions && OWP.actions.leaveRoom && OWP.actions.leaveRoom();
+
+      // Setup quality control event handlers (host only)
+      if (state.isHost && state.quality.allowHostControl) {
+        const qualitySelect = panel.querySelector('#owp-quality-select');
+        const directPlayCheck = panel.querySelector('#owp-direct-play');
+
+        if (qualitySelect) {
+          stopPlayerCapture(qualitySelect);
+          qualitySelect.onchange = () => {
+            if (OWP.playback && OWP.playback.setQualityPreset) {
+              OWP.playback.setQualityPreset(qualitySelect.value);
+            }
+          };
+        }
+
+        if (directPlayCheck) {
+          stopPlayerCapture(directPlayCheck);
+          directPlayCheck.onchange = () => {
+            if (OWP.playback && OWP.playback.toggleDirectPlay) {
+              OWP.playback.toggleDirectPlay(directPlayCheck.checked);
+            }
+          };
+        }
+      }
     }
     updateStatusIndicator();
     renderHomeWatchParties();

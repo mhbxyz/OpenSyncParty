@@ -17,6 +17,13 @@
   };
 
   const init = () => {
+    // Guard against multiple initializations (Jellyfin SPA navigation may re-trigger)
+    if (state.initialized) {
+      console.log('[OpenWatchParty] Already initialized, skipping');
+      return;
+    }
+    state.initialized = true;
+
     console.log('%c OpenWatchParty Plugin Loaded (OSD Mode) ', 'background: #2e7d32; color: #fff; font-size: 12px; padding: 2px; border-radius: 2px;');
 
     // Clear any existing intervals (in case of re-init)

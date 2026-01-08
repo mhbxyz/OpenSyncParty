@@ -1,4 +1,4 @@
-use crate::messaging::{broadcast_room_list, broadcast_to_room};
+use crate::messaging::{broadcast_room_list, broadcast_to_room, send_to_client};
 use crate::types::{Client, Clients, Room, Rooms, WsMessage};
 use crate::utils::now_ms;
 use log::info;
@@ -65,4 +65,49 @@ pub fn handle_leave(client_id: &str, clients: &mut HashMap<String, Client>, room
             }
         }
     }
+}
+
+/// Close a room by ID, notifying all participants.
+/// Used when a host creates a new room while one already exists.
+pub async fn close_room(room_id: &str, clients: &Clients, rooms: &Rooms) {
+    let clients_to_notify: Vec<String>;
+
+    {
+        let mut locked_rooms = rooms.write().await;
+        let locked_clients = clients.read().await;
+
+        if let Some(room) = locked_rooms.remove(room_id) {
+            info!("Closing room {} (host creating new room)", room_id);
+            clients_to_notify = room.clients.clone();
+
+            // Notify all participants that the room is closed
+            let msg = WsMessage {
+                msg_type: "room_closed".to_string(),
+                room: Some(room_id.to_string()),
+                client: None,
+                payload: Some(serde_json::json!({ "reason": "Host started a new room" })),
+                ts: now_ms(),
+                server_ts: Some(now_ms()),
+            };
+
+            for cid in &clients_to_notify {
+                send_to_client(cid, &locked_clients, &msg);
+            }
+
+            // Clear room_id from all clients that were in this room
+            drop(locked_clients);
+            let mut locked_clients = clients.write().await;
+            for cid in &clients_to_notify {
+                if let Some(client) = locked_clients.get_mut(cid) {
+                    if client.room_id.as_deref() == Some(room_id) {
+                        client.room_id = None;
+                    }
+                }
+            }
+        } else {
+            return;
+        }
+    }
+
+    broadcast_room_list(clients, rooms).await;
 }

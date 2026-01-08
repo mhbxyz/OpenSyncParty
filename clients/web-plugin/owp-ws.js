@@ -20,12 +20,9 @@
   };
 
   const createRoom = () => {
-    const nameInput = document.getElementById('owp-new-room-name');
-    const name = nameInput ? nameInput.value.trim() : '';
-    if (!name) return;
     const v = utils.getVideo();
     const mediaId = utils.getCurrentItemId();
-    send('create_room', { name: name, start_pos: v ? v.currentTime : 0, media_id: mediaId });
+    send('create_room', { start_pos: v ? v.currentTime : 0, media_id: mediaId });
   };
 
   const joinRoom = (id) => {
@@ -77,6 +74,14 @@
       state.userId = data.user_id || '';
       state.userName = data.user_name || '';
 
+      // Store quality settings from server config
+      if (data.quality) {
+        state.quality.maxBitrate = data.quality.default_max_bitrate || 0;
+        state.quality.preferDirectPlay = data.quality.prefer_direct_play !== false;
+        state.quality.allowHostControl = data.quality.allow_host_quality_control !== false;
+        console.log('[OpenWatchParty] Quality settings:', state.quality);
+      }
+
       if (data.auth_enabled && data.token) {
         state.authToken = data.token;
         console.log('[OpenWatchParty] Auth token obtained for user:', state.userName);
@@ -92,7 +97,28 @@
   };
 
   const connect = async () => {
-    if (state.ws) state.ws.close();
+    // Guard against multiple simultaneous connection attempts
+    if (state.isConnecting) {
+      console.log('[OpenWatchParty] Connection already in progress, skipping');
+      return;
+    }
+
+    // Guard against reconnecting if already connected
+    if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+      console.log('[OpenWatchParty] Already connected, skipping');
+      return;
+    }
+
+    state.isConnecting = true;
+
+    // Close existing connection cleanly (disable auto-reconnect during intentional close)
+    if (state.ws) {
+      const wasAutoReconnect = state.autoReconnect;
+      state.autoReconnect = false;
+      state.ws.close();
+      state.ws = null;
+      state.autoReconnect = wasAutoReconnect;
+    }
 
     // Reuse existing token if we have one (avoid rate limiting on reconnects)
     let token = state.authToken;
@@ -113,24 +139,38 @@
       state.ws = new WebSocket(wsUrl);
     } catch (err) {
       console.error('[OpenWatchParty] Failed to create WebSocket:', err);
+      state.isConnecting = false;
       return;
     }
 
     state.ws.onopen = () => {
       console.log('[OpenWatchParty] WebSocket connected');
-      // Send auth message after connection (secure: token not in URL)
-      if (token) {
-        state.ws.send(JSON.stringify({ type: 'auth', payload: { token } }));
+      state.isConnecting = false;
+      // Flush any buffered logs now that we're connected
+      if (utils.flushLogBuffer) utils.flushLogBuffer();
+      // Send auth/identity message after connection
+      // Include username even without JWT token so server knows who we are
+      const authPayload = {};
+      if (token) authPayload.token = token;
+      if (state.userName) authPayload.user_name = state.userName;
+      if (state.userId) authPayload.user_id = state.userId;
+      if (Object.keys(authPayload).length > 0) {
+        state.ws.send(JSON.stringify({ type: 'auth', payload: authPayload, ts: utils.nowMs() }));
       }
       ui.render();
     };
     state.ws.onerror = (err) => {
       console.error('[OpenWatchParty] WebSocket error:', err);
+      state.isConnecting = false;
     };
     state.ws.onclose = (e) => {
       console.log('[OpenWatchParty] WebSocket closed:', e.code, e.reason);
+      state.isConnecting = false;
       ui.render();
-      if (state.autoReconnect) setTimeout(connect, 3000);
+      // Only auto-reconnect if flag is set and not already connecting
+      if (state.autoReconnect && !state.isConnecting) {
+        setTimeout(connect, 3000);
+      }
     };
     state.ws.onmessage = (e) => {
       try {
@@ -238,24 +278,30 @@
           const targetPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
           const serverNow = utils.getServerNow();
           const msgDelay = serverNow - msg.server_ts;
+          const gap = targetPos - video.currentTime;
           utils.log('CLIENT', {
             action: msg.payload.action,
             msg_pos: msg.payload.position,
             target_pos: targetPos,
             video_pos: video.currentTime,
-            gap: targetPos - video.currentTime,
+            gap,
             msg_delay: msgDelay
           });
-          if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
+          // Seek if gap exceeds threshold
+          if (Math.abs(gap) > SEEK_THRESHOLD) {
             video.currentTime = targetPos;
+            // Update sync state to target position (we seeked there)
+            state.lastSyncServerTs = serverNow;
+            state.lastSyncPosition = targetPos;
+          } else {
+            // No seek needed - update sync state with CLIENT's current position
+            // This prevents drift oscillation when host sends small seeks (e.g., HLS rebuffering)
+            state.lastSyncServerTs = serverNow;
+            state.lastSyncPosition = video.currentTime;
           }
         }
         if (msg.payload) {
           const targetServerTs = msg.payload.target_server_ts || msg.server_ts;
-          if (typeof msg.payload.position === 'number' && typeof targetServerTs === 'number') {
-            state.lastSyncServerTs = targetServerTs;
-            state.lastSyncPosition = msg.payload.position;
-          }
           if (msg.payload.action === 'play') {
             state.lastSyncPlayState = 'playing';
             // Play immediately - don't wait for scheduled time
@@ -272,15 +318,8 @@
             state.lastSyncPlayState = 'paused';
             utils.scheduleAt(targetServerTs, () => video.pause());
           } else if (msg.payload.action === 'seek' && typeof msg.payload.position === 'number') {
-            const targetPos = utils.adjustedPosition(msg.payload.position, targetServerTs);
-            utils.scheduleAt(targetServerTs, () => {
-              if (Math.abs(video.currentTime - targetPos) > SEEK_THRESHOLD) {
-                video.currentTime = targetPos;
-                // Update sync state to match our seek - prevents drift chase after buffering
-                state.lastSyncServerTs = utils.getServerNow();
-                state.lastSyncPosition = targetPos;
-              }
-            });
+            // Seek action is already handled above with position check
+            // Only update play state here if needed
           }
         }
         break;
@@ -324,6 +363,19 @@
               utils.log('CLOCK', { rtt, server_offset: state.serverOffsetMs, delta: state.serverOffsetMs - prevOffset });
             }
           }
+        }
+        break;
+
+      case 'quality_update':
+        // Host broadcasts quality settings to guests
+        if (!state.isHost && msg.payload) {
+          state.roomQuality = {
+            maxBitrate: msg.payload.maxBitrate || 0,
+            preferDirectPlay: msg.payload.preferDirectPlay !== false,
+            preset: msg.payload.preset || 'auto'
+          };
+          console.log('[OpenWatchParty] Quality updated by host:', state.roomQuality);
+          ui.render(true);  // Force re-render to update quality display
         }
         break;
     }

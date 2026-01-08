@@ -105,10 +105,44 @@
   };
 
   /**
+   * Send a single log entry to the server.
+   */
+  const sendLog = (entry) => {
+    if (!state.ws || state.ws.readyState !== 1) return false;
+    try {
+      state.ws.send(JSON.stringify({
+        type: 'client_log',
+        payload: { category: entry.category, message: entry.message },
+        ts: entry.ts
+      }));
+      return true;
+    } catch (e) {
+      console.warn('[OWP] Failed to send log:', e.message);
+      return false;
+    }
+  };
+
+  /**
+   * Flush all buffered logs to the server.
+   * Called when WebSocket connects.
+   */
+  const flushLogBuffer = () => {
+    if (!state.ws || state.ws.readyState !== 1) return;
+    while (state.logBuffer.length > 0) {
+      const entry = state.logBuffer.shift();
+      if (!sendLog(entry)) {
+        // Put it back if send failed
+        state.logBuffer.unshift(entry);
+        break;
+      }
+    }
+  };
+
+  /**
    * Structured debug logging for sync analysis.
    * Format: [OWP:{CATEGORY}] key=value key=value ...
    * Categories: CLOCK, HOST, CLIENT, SYNC, VIDEO
-   * Logs are also forwarded to the session server via WebSocket.
+   * Logs are buffered if WebSocket not connected, then flushed when connected.
    */
   const log = (category, data) => {
     const parts = Object.entries(data).map(([k, v]) => {
@@ -130,16 +164,16 @@
     const message = parts.join(' ');
     console.log(`[OWP:${category}] ${message}`);
 
-    // Forward to session server via WebSocket (if connected)
+    const logEntry = { category, message, ts: nowMs() };
+
+    // If connected, flush buffer first then send this log
     if (state.ws && state.ws.readyState === 1) {
-      try {
-        state.ws.send(JSON.stringify({
-          type: 'client_log',
-          payload: { category, message },
-          ts: nowMs()
-        }));
-      } catch (e) {
-        // Ignore send errors (connection may be closing)
+      flushLogBuffer();
+      sendLog(logEntry);
+    } else {
+      // Buffer the log (with size limit to prevent memory issues)
+      if (state.logBuffer.length < state.logBufferMax) {
+        state.logBuffer.push(logEntry);
       }
     }
   };
@@ -162,6 +196,7 @@
     adjustedPosition,
     scheduleAt,
     escapeHtml,
-    log
+    log,
+    flushLogBuffer
   };
 })();

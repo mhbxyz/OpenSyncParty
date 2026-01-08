@@ -68,4 +68,31 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <example>ws://localhost:3000/ws or wss://party.example.com/ws</example>
     [Url(ErrorMessage = "Session server URL must be a valid URL when specified")]
     public string SessionServerUrl { get; set; } = string.Empty;
+
+    // Quality Control Settings
+
+    private int _defaultMaxBitrate = 0;
+
+    /// <summary>
+    /// Default maximum bitrate for watch parties in bits per second.
+    /// 0 = Auto (no limit), common values: 8000000 (1080p), 4000000 (720p), 1500000 (480p).
+    /// </summary>
+    [Range(0, 100000000, ErrorMessage = "Max bitrate must be between 0 and 100 Mbps")]
+    public int DefaultMaxBitrate
+    {
+        get => _defaultMaxBitrate;
+        set => _defaultMaxBitrate = Math.Max(0, value);
+    }
+
+    /// <summary>
+    /// Prefer Direct Play over transcoding when possible.
+    /// When enabled, the plugin will attempt to play media without transcoding if the client supports the format.
+    /// </summary>
+    public bool PreferDirectPlay { get; set; } = true;
+
+    /// <summary>
+    /// Allow host to change quality settings during a watch party.
+    /// When disabled, quality is locked to the default settings.
+    /// </summary>
+    public bool AllowHostQualityControl { get; set; } = true;
 }

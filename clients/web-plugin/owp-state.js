@@ -62,7 +62,15 @@
     UI_CHECK_MS: 2000,            // UI button injection check
     PING_MS: 10000,               // Ping interval (increased from 3s)
     HOME_REFRESH_MS: 5000,        // Home watch parties refresh (increased from 2s)
-    SYNC_LOOP_MS: 500             // Sync loop for playback rate correction
+    SYNC_LOOP_MS: 500,            // Sync loop for playback rate correction
+    // Quality presets (bitrate in bps)
+    QUALITY_PRESETS: {
+      auto: { bitrate: 0, label: 'Auto' },
+      '1080p': { bitrate: 8000000, label: '1080p (8 Mbps)' },
+      '720p': { bitrate: 4000000, label: '720p (4 Mbps)' },
+      '480p': { bitrate: 1500000, label: '480p (1.5 Mbps)' },
+      '360p': { bitrate: 800000, label: '360p (800 Kbps)' }
+    }
   };
 
   OWP.state = {
@@ -77,6 +85,11 @@
     inRoom: false,
     bound: false,
     autoReconnect: true,
+    isConnecting: false,
+    initialized: false,
+    // Log buffering (for logs sent before WS connected)
+    logBuffer: [],
+    logBufferMax: 100,
     serverOffsetMs: 0,
     lastSeekSentAt: 0,
     lastStateSentAt: 0,
@@ -110,6 +123,15 @@
     },
     // Video event listener cleanup
     videoListeners: null,
-    currentVideoElement: null
+    currentVideoElement: null,
+    // Quality control settings
+    quality: {
+      maxBitrate: 0,           // 0 = auto (from server config)
+      preferDirectPlay: true,  // Prefer direct play over transcoding
+      allowHostControl: true,  // Allow host to change quality
+      currentPreset: 'auto'    // Current quality preset key
+    },
+    // Room quality (synced from host)
+    roomQuality: null          // { maxBitrate, preferDirectPlay, preset } - null = use local settings
   };
 })();

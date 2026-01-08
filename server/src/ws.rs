@@ -1,8 +1,8 @@
 use crate::auth::JwtConfig;
 use crate::messaging::{broadcast_room_list, broadcast_to_room, send_room_list, send_to_client};
-use crate::room::handle_leave;
+use crate::room::{handle_leave, close_room};
 use crate::types::{Clients, PendingPlay, PlaybackState, Room, WsMessage};
-use crate::utils::{now_ms, sanitize_room_name};
+use crate::utils::now_ms;
 use futures::StreamExt;
 use log::{debug, info, warn};
 use std::collections::HashSet;
@@ -22,7 +22,6 @@ const RATE_LIMIT_MESSAGES: u32 = 30;  // Max messages per window
 const RATE_LIMIT_WINDOW_MS: u64 = 1000;  // Window size in ms
 
 // Resource limits
-const MAX_ROOMS_PER_USER: usize = 3;  // Max rooms a user can host
 const MAX_CLIENTS_PER_ROOM: usize = 20;  // Max clients in a room
 
 // Payload validation
@@ -228,6 +227,7 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
         "auth" => {
             // Handle authentication via message (security: token not in URL)
             if let Some(payload) = &parsed.payload {
+                // Try JWT token first
                 if let Some(token) = payload.get("token").and_then(|v| v.as_str()) {
                     match jwt_config.validate_token(token) {
                         Ok(claims) => {
@@ -248,10 +248,28 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                                 ts: now_ms(),
                                 server_ts: Some(now_ms()),
                             });
+                            return;
                         }
                         Err(e) => {
                             warn!("Auth failed for {}: {}", client_id, e);
                             send_error(client_id, clients, "Authentication failed").await;
+                            return;
+                        }
+                    }
+                }
+                // If no token but user_name provided, accept identity (auth disabled mode)
+                // This allows clients to identify themselves when JWT is not required
+                if !jwt_config.enabled {
+                    let user_name = payload.get("user_name").and_then(|v| v.as_str());
+                    let user_id = payload.get("user_id").and_then(|v| v.as_str());
+                    if let Some(name) = user_name {
+                        let mut locked = clients.write().await;
+                        if let Some(client) = locked.get_mut(client_id) {
+                            client.user_name = name.to_string();
+                            if let Some(uid) = user_id {
+                                client.user_id = uid.to_string();
+                            }
+                            info!("Client {} identified as {}", client_id, name);
                         }
                     }
                 }
@@ -266,73 +284,74 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                 send_error(client_id, clients, "Authentication required").await;
                 return;
             }
-            if let Some(payload) = &parsed.payload {
-                // Check if user already hosts too many rooms
-                {
-                    let locked_rooms = rooms.read().await;
-                    let rooms_hosted = locked_rooms.values()
-                        .filter(|r| r.host_id == client_id)
-                        .count();
-                    if rooms_hosted >= MAX_ROOMS_PER_USER {
-                        let locked_clients = clients.read().await;
-                        send_to_client(client_id, &locked_clients, &WsMessage {
-                            msg_type: "error".to_string(),
-                            room: None,
-                            client: Some(client_id.to_string()),
-                            payload: Some(serde_json::json!({ "message": "Maximum rooms limit reached" })),
-                            ts: now_ms(),
-                            server_ts: Some(now_ms()),
-                        });
-                        return;
-                    }
-                }
 
-                let raw_name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("New Room");
-                let room_name = sanitize_room_name(raw_name);  // Sanitize room name (fixes L08)
-                let room_id = uuid::Uuid::new_v4().to_string();
-                let raw_start_pos = payload.get("start_pos").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                let start_pos = if is_valid_position(raw_start_pos) { raw_start_pos } else { 0.0 };
-                let media_id = payload.get("media_id")
-                    .and_then(|v| v.as_str())
-                    .filter(|id| is_valid_media_id(id))
-                    .map(|v| v.to_string());
-
-                info!("Creating room '{}' ({}) for {}", room_name, room_id, client_id);
-
-                let room = Room {
-                    room_id: room_id.clone(),
-                    name: room_name,
-                    host_id: client_id.to_string(),
-                    media_id,
-                    clients: vec![client_id.to_string()],
-                    ready_clients: HashSet::from([client_id.to_string()]),
-                    pending_play: None,
-                    state: PlaybackState { position: start_pos, play_state: "paused".to_string() },
-                    last_state_ts: now_ms(),
-                    last_command_ts: 0,
-                };
-
-                {
-                    let mut locked_rooms = rooms.write().await;
-                    let mut locked_clients = clients.write().await;
-
-                    locked_rooms.insert(room_id.clone(), room.clone());
-                    if let Some(client) = locked_clients.get_mut(client_id) {
-                        client.room_id = Some(room_id.clone());
-                    }
-
-                    send_to_client(client_id, &locked_clients, &WsMessage {
-                        msg_type: "room_state".to_string(),
-                        room: Some(room_id.clone()),
-                        client: Some(client_id.to_string()),
-                        payload: Some(serde_json::json!({ "name": room.name, "host_id": room.host_id, "state": room.state, "participant_count": 1, "media_id": room.media_id })),
-                        ts: now_ms(),
-                        server_ts: Some(now_ms()),
-                    });
-                }
-
-                broadcast_room_list(clients, rooms).await;
+            // Close any existing room by this user (one room per user)
+            let existing_room_id = {
+                let locked_rooms = rooms.read().await;
+                locked_rooms.values()
+                    .find(|r| r.host_id == client_id)
+                    .map(|r| r.room_id.clone())
+            };
+            if let Some(room_id) = existing_room_id {
+                close_room(&room_id, clients, rooms).await;
             }
+
+            // Get username from client for room name
+            let host_name = {
+                let locked_clients = clients.read().await;
+                locked_clients.get(client_id)
+                    .map(|c| c.user_name.clone())
+                    .unwrap_or_else(|| "Unknown".to_string())
+            };
+            let room_name = format!("Room de {}", host_name);
+
+            let room_id = uuid::Uuid::new_v4().to_string();
+            let raw_start_pos = parsed.payload.as_ref()
+                .and_then(|p| p.get("start_pos"))
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            let start_pos = if is_valid_position(raw_start_pos) { raw_start_pos } else { 0.0 };
+            let media_id = parsed.payload.as_ref()
+                .and_then(|p| p.get("media_id"))
+                .and_then(|v| v.as_str())
+                .filter(|id| is_valid_media_id(id))
+                .map(|v| v.to_string());
+
+            info!("Creating room '{}' ({}) for {}", room_name, room_id, client_id);
+
+            let room = Room {
+                room_id: room_id.clone(),
+                name: room_name,
+                host_id: client_id.to_string(),
+                media_id,
+                clients: vec![client_id.to_string()],
+                ready_clients: HashSet::from([client_id.to_string()]),
+                pending_play: None,
+                state: PlaybackState { position: start_pos, play_state: "paused".to_string() },
+                last_state_ts: now_ms(),
+                last_command_ts: 0,
+            };
+
+            {
+                let mut locked_rooms = rooms.write().await;
+                let mut locked_clients = clients.write().await;
+
+                locked_rooms.insert(room_id.clone(), room.clone());
+                if let Some(client) = locked_clients.get_mut(client_id) {
+                    client.room_id = Some(room_id.clone());
+                }
+
+                send_to_client(client_id, &locked_clients, &WsMessage {
+                    msg_type: "room_state".to_string(),
+                    room: Some(room_id.clone()),
+                    client: Some(client_id.to_string()),
+                    payload: Some(serde_json::json!({ "name": room.name, "host_id": room.host_id, "state": room.state, "participant_count": 1, "media_id": room.media_id })),
+                    ts: now_ms(),
+                    server_ts: Some(now_ms()),
+                });
+            }
+
+            broadcast_room_list(clients, rooms).await;
         },
         "join_room" => {
             // Require authentication for room operations
@@ -524,6 +543,36 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                 let message = payload.get("message").and_then(|v| v.as_str()).unwrap_or("");
                 let short_id = &client_id[..8];
                 info!("[CLIENT:{}:{}] {}", short_id, category, message);
+            }
+        },
+        "quality_update" => {
+            // Host broadcasts quality settings to all clients in the room
+            if let Some(ref room_id) = parsed.room {
+                let locked_rooms = rooms.read().await;
+                let locked_clients = clients.read().await;
+
+                if let Some(room) = locked_rooms.get(room_id) {
+                    // Only host can change quality settings
+                    if room.host_id != client_id {
+                        return;
+                    }
+
+                    info!("Host {} updated quality settings for room {}", client_id, room_id);
+
+                    // Relay to all other clients in the room
+                    for dest_id in &room.clients {
+                        if dest_id != client_id {
+                            send_to_client(dest_id, &locked_clients, &WsMessage {
+                                msg_type: "quality_update".to_string(),
+                                room: Some(room_id.clone()),
+                                client: Some(client_id.to_string()),
+                                payload: parsed.payload.clone(),
+                                ts: now_ms(),
+                                server_ts: Some(now_ms()),
+                            });
+                        }
+                    }
+                }
             }
         },
         other => {

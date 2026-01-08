@@ -3,7 +3,7 @@ services:
     build:
       context: ../../server
       dockerfile: Dockerfile
-    container_name: openwatchparty-session-server
+    container_name: owp-session-server
     ports:
       - "${SESSION_SERVER_PORT:-3000}:3000"
     restart: unless-stopped
