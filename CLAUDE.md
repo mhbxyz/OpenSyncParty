@@ -76,3 +76,7 @@ JWT_SECRET=               # Enable auth (empty = disabled)
 - CSS/HTML IDs: `owp-` prefix (e.g., `#owp-panel`, `.owp-header`)
 - JS modules: `owp-*.js`
 - Rust modules: `auth.rs`, `ws.rs`, `room.rs`, `messaging.rs`, `types.rs`, `utils.rs`
+
+## Commit Rules
+
+- **No AI signatures**: Do not add `Co-Authored-By: Claude` or similar AI attribution lines in commits
