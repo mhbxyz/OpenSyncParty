@@ -39,12 +39,29 @@
     if (typeof pm.currentItem === 'function') return pm.currentItem();
     return pm.currentItem || pm._currentItem || null;
   };
+  /**
+   * Gets the current item ID from playback manager or URL.
+   * Jellyfin item IDs are 32 hex characters (fixes L13).
+   */
   const getCurrentItemId = () => {
+    // Prefer the playback manager as the authoritative source
     const item = getCurrentItem();
     if (item) return item.Id || item.id || item.ItemId || null;
+
+    // Fallback: parse from URL hash (less reliable but works for direct links)
     const hash = window.location.hash || '';
-    const match = hash.match(/id=([a-f0-9]{16,})/i);
-    return match ? match[1] : null;
+    // Match various Jellyfin URL patterns: id=xxx, /items/xxx, /videos/xxx
+    const patterns = [
+      /[?&]id=([a-f0-9]{32})/i,           // Query param: ?id=xxx or &id=xxx
+      /\/items\/([a-f0-9]{32})/i,         // Path: /items/xxx
+      /\/videos\/([a-f0-9]{32})/i,        // Path: /videos/xxx
+      /id=([a-f0-9]{32})/i                // Simple: id=xxx (legacy)
+    ];
+    for (const pattern of patterns) {
+      const match = hash.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
   };
   const getItemImageUrl = (itemId) => {
     if (!itemId || !window.ApiClient || typeof ApiClient.getItemImageUrl !== 'function') return '';

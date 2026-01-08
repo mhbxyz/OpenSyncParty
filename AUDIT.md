@@ -13,8 +13,8 @@
 | 🔴 Critique | 4 | 4 | 0 |
 | 🟠 Haute | 10 | 10 | 0 |
 | 🟡 Moyenne | 65 | 12 | 53 |
-| 🟢 Basse | 24 | 0 | 24 |
-| **Total** | **103** | **26** | **77** |
+| 🟢 Basse | 24 | 9 | 15 |
+| **Total** | **103** | **35** | **68** |
 
 ### Répartition par Composant
 
@@ -1171,34 +1171,34 @@ Le message `room_closed` est créé comme string JSON brute au lieu d'un `WsMess
 ## 🟢 Issues Basses
 
 <details>
-<summary>Voir les 24 issues basses</summary>
+<summary>Voir les 24 issues basses (9 résolues)</summary>
 
-| ID | Composant | Description |
-|----|-----------|-------------|
-| L01 | Rust | `now_ms()` unwrap peut panic si horloge recule |
-| L02 | Rust | Validation position/play_state incohérente |
-| L03 | Rust | Messages d'erreur incomplets |
-| L04 | Rust | Pas de validation entropie JWT secret |
-| L05 | Rust | Media ID validé format mais pas permissions |
-| L06 | Rust | Pas de CSRF token pour state changes |
-| L07 | Rust | Rate limiting ne distingue pas messages critiques |
-| L08 | Rust | Room names pas sanitized |
-| L09 | Rust | Pas de timeout idle connection |
-| L10 | Rust | User permission checks absents |
-| L11 | Rust | Pas de persistent storage |
-| L12 | Rust | Position NaN handling edge case |
-| L13 | JS | Hash-based item ID parsing fragile |
-| L14 | JS | Empty room list rendering incomplete |
-| L15 | C# | Logging JWT secret length info leak |
-| L16 | C# | No secret rotation support |
-| L17 | C# | Missing version info in plugin |
-| L18 | C# | No explicit DI registration |
-| L19 | C# | Missing localization attributes |
-| L20 | C# | Incomplete meta.json |
-| L21 | C# | No API documentation |
-| L22 | C# | No authorization on GetClientScript |
-| L23 | C# | Missing data validation attributes |
-| L24 | C# | No async config calls |
+| ID | Composant | Description | Statut |
+|----|-----------|-------------|--------|
+| L01 | Rust | `now_ms()` unwrap peut panic si horloge recule | ✅ Résolu |
+| L02 | Rust | Validation position/play_state incohérente | ⬜ Non résolu |
+| L03 | Rust | Messages d'erreur incomplets | ✅ Résolu |
+| L04 | Rust | Pas de validation entropie JWT secret | ✅ Résolu |
+| L05 | Rust | Media ID validé format mais pas permissions | ⬜ Non résolu |
+| L06 | Rust | Pas de CSRF token pour state changes | ⬜ Non résolu |
+| L07 | Rust | Rate limiting ne distingue pas messages critiques | ⬜ Non résolu |
+| L08 | Rust | Room names pas sanitized | ✅ Résolu |
+| L09 | Rust | Pas de timeout idle connection | ⬜ Non résolu |
+| L10 | Rust | User permission checks absents | ⬜ Non résolu |
+| L11 | Rust | Pas de persistent storage | ⬜ Non résolu |
+| L12 | Rust | Position NaN handling edge case | ✅ Résolu |
+| L13 | JS | Hash-based item ID parsing fragile | ✅ Résolu |
+| L14 | JS | Empty room list rendering incomplete | ⬜ Non résolu |
+| L15 | C# | Logging JWT secret length info leak | ✅ Résolu |
+| L16 | C# | No secret rotation support | ⬜ Non résolu |
+| L17 | C# | Missing version info in plugin | ✅ Résolu |
+| L18 | C# | No explicit DI registration | ⬜ Non résolu |
+| L19 | C# | Missing localization attributes | ⬜ Non résolu |
+| L20 | C# | Incomplete meta.json | ⬜ Non résolu |
+| L21 | C# | No API documentation | ⬜ Non résolu |
+| L22 | C# | No authorization on GetClientScript | ⬜ Non résolu |
+| L23 | C# | Missing data validation attributes | ✅ Résolu |
+| L24 | C# | No async config calls | ⬜ Non résolu |
 
 </details>
 
@@ -1247,6 +1247,7 @@ Le message `room_closed` est créé comme string JSON brute au lieu d'un `WsMess
 |------|---------|--------|-------------|
 | 2026-01-08 | 1.0 | Claude Code | Création initiale |
 | 2026-01-08 | 1.1 | Claude Code | Résolution de 12 issues moyennes (B03, B09, M-UX02, M-UX05, M-UX08, M-P04, M-P05, M-P12, M-Q03, M-Q04, M-Q09, M-Q15, M-Q18) |
+| 2026-01-08 | 1.2 | Claude Code | Résolution de 9 issues basses (L01, L03, L04, L08, L12, L13, L15, L17, L23) |
 
 ---
 

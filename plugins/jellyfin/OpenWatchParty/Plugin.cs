@@ -41,9 +41,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public override string Name => "OpenWatchParty";
 
     public override Guid Id => new("0f2fd0fd-09ff-4f49-9f1c-4a8f421a4b7d");
-    
-    // Developer: https://github.com/mhbxyz
-    // Repository: https://github.com/mhbxyz/OpenWatchParty
+
+    /// <summary>
+    /// Gets the plugin description.
+    /// </summary>
+    public override string Description => "Watch movies together in sync with friends";
+
+    /// <summary>
+    /// Gets the plugin version from the assembly (fixes L17).
+    /// </summary>
+    public static string PluginVersion => typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
 
     public IEnumerable<PluginPageInfo> GetPages()
     {

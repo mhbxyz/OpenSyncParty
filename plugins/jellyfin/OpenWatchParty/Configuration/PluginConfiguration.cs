@@ -1,7 +1,12 @@
+using System.ComponentModel.DataAnnotations;
 using MediaBrowser.Model.Plugins;
 
 namespace OpenWatchParty.Plugin.Configuration;
 
+/// <summary>
+/// Configuration for the OpenWatchParty plugin.
+/// Provides settings for JWT authentication and session server connection.
+/// </summary>
 public class PluginConfiguration : BasePluginConfiguration
 {
     private string _jwtSecret = string.Empty;
@@ -12,6 +17,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the JWT secret. If empty, authentication is disabled.
     /// Set a value (min 32 chars) to enable authentication.
     /// </summary>
+    /// <remarks>
+    /// For security, the secret should be at least 32 characters with high entropy.
+    /// Use a cryptographically random string for production deployments.
+    /// </remarks>
+    [MinLength(32, ErrorMessage = "JWT secret must be at least 32 characters when set")]
     public string JwtSecret
     {
         get => _jwtSecret;
@@ -21,16 +31,21 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// JWT audience claim. Defaults to "OpenWatchParty".
     /// </summary>
+    [Required(AllowEmptyStrings = false, ErrorMessage = "JWT audience is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "JWT audience must be between 1 and 100 characters")]
     public string JwtAudience { get; set; } = "OpenWatchParty";
 
     /// <summary>
     /// JWT issuer claim. Defaults to "Jellyfin".
     /// </summary>
+    [Required(AllowEmptyStrings = false, ErrorMessage = "JWT issuer is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "JWT issuer must be between 1 and 100 characters")]
     public string JwtIssuer { get; set; } = "Jellyfin";
 
     /// <summary>
     /// Token TTL in seconds. Must be between 60 and 86400 (1 min to 24 hours).
     /// </summary>
+    [Range(60, 86400, ErrorMessage = "Token TTL must be between 60 and 86400 seconds")]
     public int TokenTtlSeconds
     {
         get => _tokenTtlSeconds;
@@ -40,6 +55,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Invite TTL in seconds. Must be between 60 and 86400 (1 min to 24 hours).
     /// </summary>
+    [Range(60, 86400, ErrorMessage = "Invite TTL must be between 60 and 86400 seconds")]
     public int InviteTtlSeconds
     {
         get => _inviteTtlSeconds;
@@ -49,5 +65,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// The WebSocket server URL. If empty, uses the default (same host, port 3000).
     /// </summary>
+    /// <example>ws://localhost:3000/ws or wss://party.example.com/ws</example>
+    [Url(ErrorMessage = "Session server URL must be a valid URL when specified")]
     public string SessionServerUrl { get; set; } = string.Empty;
 }

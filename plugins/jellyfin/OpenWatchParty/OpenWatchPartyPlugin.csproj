@@ -5,6 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseLocalJellyfinRefs Condition="Exists('refs/MediaBrowser.Common.dll')">true</UseLocalJellyfinRefs>
+    <!-- Plugin version info (fixes L17) -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Authors>mhbxyz</Authors>
+    <Description>Watch movies together in sync with friends on Jellyfin</Description>
+    <RepositoryUrl>https://github.com/mhbxyz/OpenWatchParty</RepositoryUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

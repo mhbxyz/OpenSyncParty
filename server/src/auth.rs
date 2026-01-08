@@ -25,7 +25,18 @@ impl JwtConfig {
         let enabled = !secret.is_empty();
 
         if !enabled {
-            println!("[server] WARNING: JWT_SECRET not set, authentication DISABLED");
+            log::warn!("JWT_SECRET not set, authentication DISABLED");
+        } else {
+            // Validate secret quality (fixes L04, L15)
+            // Note: We don't log exact lengths to avoid information leakage
+            if secret.len() < 32 {
+                log::warn!("JWT_SECRET is too short. Use at least 32 characters for secure authentication.");
+            }
+            // Check for low entropy (e.g., all same character)
+            let unique_chars: std::collections::HashSet<char> = secret.chars().collect();
+            if unique_chars.len() < 10 {
+                log::warn!("JWT_SECRET has low entropy. Use a more random secret with diverse characters.");
+            }
         }
 
         Self {

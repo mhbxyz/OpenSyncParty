@@ -2,7 +2,7 @@ use crate::auth::JwtConfig;
 use crate::messaging::{broadcast_room_list, broadcast_to_room, send_room_list, send_to_client};
 use crate::room::handle_leave;
 use crate::types::{Clients, PendingPlay, PlaybackState, Room, WsMessage};
-use crate::utils::now_ms;
+use crate::utils::{now_ms, sanitize_room_name};
 use futures::StreamExt;
 use log::{debug, info, warn};
 use std::collections::HashSet;
@@ -29,6 +29,8 @@ const MAX_CLIENTS_PER_ROOM: usize = 20;  // Max clients in a room
 const MAX_POSITION_SECONDS: f64 = 86400.0;  // 24 hours max
 const MAX_MESSAGE_SIZE: usize = 64 * 1024;  // 64 KB max message size
 
+/// Validates a playback position value.
+/// Returns false for NaN, Infinity, negative values, or values exceeding 24 hours (fixes L12).
 fn is_valid_position(pos: f64) -> bool {
     pos.is_finite() && pos >= 0.0 && pos <= MAX_POSITION_SECONDS
 }
@@ -285,7 +287,8 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                     }
                 }
 
-                let room_name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("New Room").to_string();
+                let raw_name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("New Room");
+                let room_name = sanitize_room_name(raw_name);  // Sanitize room name (fixes L08)
                 let room_id = uuid::Uuid::new_v4().to_string();
                 let raw_start_pos = payload.get("start_pos").and_then(|v| v.as_f64()).unwrap_or(0.0);
                 let start_pos = if is_valid_position(raw_start_pos) { raw_start_pos } else { 0.0 };
@@ -514,6 +517,8 @@ async fn client_msg(client_id: &str, msg: warp::ws::Message, clients: &Clients, 
                 server_ts: Some(now_ms()),
             });
         },
-        _ => {}
+        other => {
+            debug!("Unknown message type '{}' from {}", other, client_id);
+        }
     }
 }
