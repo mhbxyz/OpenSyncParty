@@ -1,12 +1,12 @@
 # Architecture
 
-OpenSyncParty is a Jellyfin plugin paired with a lightweight Rust session server.
+OpenWatchParty is a Jellyfin plugin paired with a lightweight Rust session server.
 
 ## Components
 
 ### 1. Jellyfin Plugin (C#)
 
-*   **Static File Server**: Serves the client-side JavaScript bundle on `/OpenSyncParty/ClientScript`.
+*   **Static File Server**: Serves the client-side JavaScript bundle on `/OpenWatchParty/ClientScript`.
 *   **Configuration**: Standard Jellyfin plugin configuration page.
 
 ### 2. Session Server (Rust)
@@ -22,7 +22,7 @@ OpenSyncParty is a Jellyfin plugin paired with a lightweight Rust session server
 
 ## Data Flow
 
-1.  **Load**: Browser loads Jellyfin -> `index.html` -> `<script src="/web/plugins/opensyncparty/plugin.js">` -> Web client loads JS.
+1.  **Load**: Browser loads Jellyfin -> `index.html` -> `<script src="/web/plugins/openwatchparty/plugin.js">` -> Web client loads JS.
 2.  **Connect**: Script initializes, finds the header, injects the button, and connects WS to `ws(s)://<host>:3000/ws`.
 3.  **Sync**: Playback events are intercepted and sent over WS.
 

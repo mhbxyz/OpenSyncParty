@@ -9,9 +9,9 @@ __pycache__/
 # .NET build artifacts
 bin/
 obj/
-plugins/jellyfin/OpenSyncParty/dist/
-plugins/jellyfin/OpenSyncParty/refs/
-plugins/jellyfin/OpenSyncParty/Web/plugin.js
+plugins/jellyfin/OpenWatchParty/dist/
+plugins/jellyfin/OpenWatchParty/refs/
+plugins/jellyfin/OpenWatchParty/Web/plugin.js
 
 # Rust build artifacts
 session-server-rust/target/

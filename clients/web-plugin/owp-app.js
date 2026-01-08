@@ -1,12 +1,12 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.app) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.app) return;
 
-  const state = OSP.state;
-  const ui = OSP.ui;
-  const utils = OSP.utils;
-  const playback = OSP.playback;
-  const { UI_CHECK_MS, PING_MS, HOME_REFRESH_MS, SYNC_LOOP_MS } = OSP.constants;
+  const state = OWP.state;
+  const ui = OWP.ui;
+  const utils = OWP.utils;
+  const playback = OWP.playback;
+  const { UI_CHECK_MS, PING_MS, HOME_REFRESH_MS, SYNC_LOOP_MS } = OWP.constants;
 
   const clearAllIntervals = () => {
     if (state.intervals.ui) { clearInterval(state.intervals.ui); state.intervals.ui = null; }
@@ -17,19 +17,19 @@
   };
 
   const init = () => {
-    console.log('%c OpenSyncParty Plugin Loaded (OSD Mode) ', 'background: #2e7d32; color: #fff; font-size: 12px; padding: 2px; border-radius: 2px;');
+    console.log('%c OpenWatchParty Plugin Loaded (OSD Mode) ', 'background: #2e7d32; color: #fff; font-size: 12px; padding: 2px; border-radius: 2px;');
 
     // Clear any existing intervals (in case of re-init)
     clearAllIntervals();
 
     ui.injectStyles();
-    if (!document.getElementById(OSP.constants.PANEL_ID)) {
+    if (!document.getElementById(OWP.constants.PANEL_ID)) {
       const panel = document.createElement('div');
-      panel.id = OSP.constants.PANEL_ID;
+      panel.id = OWP.constants.PANEL_ID;
       panel.className = 'hide';
       document.body.appendChild(panel);
     }
-    if (OSP.actions && OSP.actions.connect) OSP.actions.connect();
+    if (OWP.actions && OWP.actions.connect) OWP.actions.connect();
 
     // UI check interval - inject OSD button and bind video
     state.intervals.ui = setInterval(() => {
@@ -40,7 +40,7 @@
     // Ping interval - only when connected
     state.intervals.ping = setInterval(() => {
       if (state.ws && state.ws.readyState === 1) {
-        OSP.actions.send('ping', { client_ts: utils.nowMs() });
+        OWP.actions.send('ping', { client_ts: utils.nowMs() });
       }
     }, PING_MS);
 
@@ -81,5 +81,5 @@
     state.bound = false;
   };
 
-  OSP.app = { init, cleanup };
+  OWP.app = { init, cleanup };
 })();

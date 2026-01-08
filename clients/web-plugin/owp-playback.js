@@ -1,9 +1,9 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.playback) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.playback) return;
 
-  const state = OSP.state;
-  const utils = OSP.utils;
+  const state = OWP.state;
+  const utils = OWP.utils;
   const {
     STATE_UPDATE_MS,
     SEEK_THRESHOLD,
@@ -12,7 +12,7 @@
     PLAYBACK_RATE_MIN,
     PLAYBACK_RATE_MAX,
     DRIFT_GAIN
-  } = OSP.constants;
+  } = OWP.constants;
 
   const playItem = (item) => {
     const pm = utils.getPlaybackManager();
@@ -66,7 +66,7 @@
 
   const notifyReady = () => {
     if (!state.inRoom || !state.roomId || state.readyRoomId === state.roomId) return;
-    const actions = OSP.actions;
+    const actions = OWP.actions;
     if (!actions || !actions.send) return;
     state.readyRoomId = state.roomId;
     actions.send('ready', { room: state.roomId, media_id: utils.getCurrentItemId() });
@@ -103,7 +103,7 @@
     state.currentVideoElement = video;
 
     const sendStateUpdate = () => {
-      const actions = OSP.actions;
+      const actions = OWP.actions;
       if (!state.isHost || !actions || !actions.send) return;
       // Don't send while syncing to server command (prevents feedback loop)
       if (state.isSyncing) return;
@@ -118,7 +118,7 @@
     };
 
     const onEvent = (action) => {
-      const actions = OSP.actions;
+      const actions = OWP.actions;
       if (!state.isHost || !actions || !actions.send || !utils.shouldSend()) return;
       // Don't send while syncing to server command (prevents feedback loop)
       if (state.isSyncing) return;
@@ -237,7 +237,7 @@
     video.playbackRate = rate;
   };
 
-  OSP.playback = {
+  OWP.playback = {
     playItem,
     ensurePlayback,
     bindVideo,

@@ -1,7 +1,7 @@
 (() => {
-  if (window.OpenSyncParty && window.OpenSyncParty.__loaded) return;
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  OSP.__loaded = true;
+  if (window.OpenWatchParty && window.OpenWatchParty.__loaded) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  OWP.__loaded = true;
 
   const currentScript = document.currentScript;
   let cacheBust = '';
@@ -13,7 +13,7 @@
   }
   if (!cacheBust) cacheBust = String(Date.now());
 
-  const base = '/web/plugins/opensyncparty';
+  const base = '/web/plugins/openwatchparty';
 
   const loadScript = (src) => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -27,23 +27,23 @@
   // Optimized parallel loading based on dependencies:
   // 1. state (no deps) → 2. utils (state) → 3. ui + playback (parallel) → 4. ws (ui) → 5. app (all)
   const loadAll = async () => {
-    await loadScript('osp-state.js');
-    await loadScript('osp-utils.js');
+    await loadScript('owp-state.js');
+    await loadScript('owp-utils.js');
     await Promise.all([
-      loadScript('osp-ui.js'),
-      loadScript('osp-playback.js')
+      loadScript('owp-ui.js'),
+      loadScript('owp-playback.js')
     ]);
-    await loadScript('osp-ws.js');
-    await loadScript('osp-app.js');
+    await loadScript('owp-ws.js');
+    await loadScript('owp-app.js');
   };
 
   loadAll()
     .then(() => {
-      if (window.OpenSyncParty && window.OpenSyncParty.app && typeof window.OpenSyncParty.app.init === 'function') {
-        window.OpenSyncParty.app.init();
+      if (window.OpenWatchParty && window.OpenWatchParty.app && typeof window.OpenWatchParty.app.init === 'function') {
+        window.OpenWatchParty.app.init();
       }
     })
     .catch((err) => {
-      console.error('[OpenSyncParty] Loader error:', err);
+      console.error('[OpenWatchParty] Loader error:', err);
     });
 })();

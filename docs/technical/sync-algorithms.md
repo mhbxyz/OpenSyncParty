@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-OpenSyncParty utilise plusieurs algorithmes pour maintenir la synchronisation de lecture entre les clients, en gérant les défis spécifiques du streaming HLS/transcodé.
+OpenWatchParty utilise plusieurs algorithmes pour maintenir la synchronisation de lecture entre les clients, en gérant les défis spécifiques du streaming HLS/transcodé.
 
 ---
 

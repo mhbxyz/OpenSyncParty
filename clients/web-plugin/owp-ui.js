@@ -1,10 +1,10 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.ui) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.ui) return;
 
-  const { PANEL_ID, BTN_ID, STYLE_ID, HOME_SECTION_ID, host } = OSP.constants;
-  const state = OSP.state;
-  const utils = OSP.utils;
+  const { PANEL_ID, BTN_ID, STYLE_ID, HOME_SECTION_ID, host } = OWP.constants;
+  const state = OWP.state;
+  const utils = OWP.utils;
 
   const injectStyles = () => {
     if (document.getElementById(STYLE_ID)) return;
@@ -19,32 +19,32 @@
         display: flex; flex-direction: column;
       }
       #${PANEL_ID}.hide { display: none; }
-      .osp-header { font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
-      .osp-section { margin-bottom: 15px; overflow-y: auto; }
-      .osp-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-      .osp-room-item { 
+      .owp-header { font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
+      .owp-section { margin-bottom: 15px; overflow-y: auto; }
+      .owp-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+      .owp-room-item { 
         background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px;
         display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         border: 1px solid transparent; transition: all 0.2s;
       }
-      .osp-room-item:hover { background: rgba(255,255,255,0.1); border-color: #1565c0; }
-      .osp-btn { 
+      .owp-room-item:hover { background: rgba(255,255,255,0.1); border-color: #1565c0; }
+      .owp-btn { 
         border: none; border-radius: 6px; padding: 10px 15px; 
         background: #388e3c; color: #fff; cursor: pointer; font-weight: bold; font-size: 13px;
       }
-      .osp-btn.secondary { background: #1565c0; }
-      .osp-btn.danger { background: #d32f2f; }
-      .osp-input { 
+      .owp-btn.secondary { background: #1565c0; }
+      .owp-btn.danger { background: #d32f2f; }
+      .owp-input { 
         width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; 
         background: #000; color: #fff; box-sizing: border-box; margin-bottom: 10px; font-size: 14px;
       }
-      .osp-footer { font-size: 10px; color: #555; text-align: center; margin-top: auto; padding-top: 10px; }
+      .owp-footer { font-size: 10px; color: #555; text-align: center; margin-top: auto; padding-top: 10px; }
     `;
     document.head.appendChild(style);
   };
 
   const updateStatusIndicator = () => {
-    const el = document.getElementById('osp-ws-indicator');
+    const el = document.getElementById('owp-ws-indicator');
     if (!el) return;
     const connected = state.ws && state.ws.readyState === 1;
     el.style.color = connected ? '#69f0ae' : '#ff5252';
@@ -52,7 +52,7 @@
   };
 
   const updateRoomListUI = () => {
-    const roomList = document.getElementById('osp-room-list');
+    const roomList = document.getElementById('owp-room-list');
     if (!roomList) return;
     if (state.rooms.length === 0) {
       roomList.innerHTML = '<div style="font-size:12px; color:#555; padding: 10px; text-align:center;">No active rooms.</div>';
@@ -61,10 +61,10 @@
     roomList.innerHTML = '';
     state.rooms.forEach(room => {
       const item = document.createElement('div');
-      item.className = 'osp-room-item';
-      item.innerHTML = `<div><div style="font-weight:bold">${utils.escapeHtml(room.name)}</div><div style="font-size:10px; color:#888">${room.count} users</div></div><button class="osp-btn secondary">Join</button>`;
+      item.className = 'owp-room-item';
+      item.innerHTML = `<div><div style="font-weight:bold">${utils.escapeHtml(room.name)}</div><div style="font-size:10px; color:#888">${room.count} users</div></div><button class="owp-btn secondary">Join</button>`;
       item.onclick = () => {
-        if (OSP.actions && OSP.actions.joinRoom) OSP.actions.joinRoom(room.id);
+        if (OWP.actions && OWP.actions.joinRoom) OWP.actions.joinRoom(room.id);
       };
       roomList.appendChild(item);
     });
@@ -78,7 +78,7 @@
     }
 
     const card = document.createElement('div');
-    card.className = 'osp-room-card';
+    card.className = 'owp-room-card';
     card.dataset.roomId = room.id;
     card.dataset.mediaId = room.media_id || '';
     card.dataset.count = room.count;
@@ -95,8 +95,8 @@
     const info = document.createElement('div');
     info.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
     info.innerHTML = `
-      <div class="osp-card-name" style="font-weight:600;font-size:16px;">${utils.escapeHtml(room.name)}</div>
-      <div class="osp-card-count" style="font-size:12px;color:#aaa;">${room.count} participant${room.count > 1 ? 's' : ''}</div>
+      <div class="owp-card-name" style="font-weight:600;font-size:16px;">${utils.escapeHtml(room.name)}</div>
+      <div class="owp-card-count" style="font-size:12px;color:#aaa;">${room.count} participant${room.count > 1 ? 's' : ''}</div>
       <div style="font-size:12px;color:#69f0ae;">Join</div>
     `;
 
@@ -104,10 +104,10 @@
     card.appendChild(info);
 
     card.addEventListener('click', () => {
-      if (OSP.actions && OSP.actions.joinRoom) {
-        OSP.actions.joinRoom(room.id);
-        if (room.media_id && OSP.playback && OSP.playback.ensurePlayback) {
-          OSP.playback.ensurePlayback(room.media_id);
+      if (OWP.actions && OWP.actions.joinRoom) {
+        OWP.actions.joinRoom(room.id);
+        if (room.media_id && OWP.playback && OWP.playback.ensurePlayback) {
+          OWP.playback.ensurePlayback(room.media_id);
         }
       }
     });
@@ -135,20 +135,20 @@
     }
 
     // Ensure container structure exists
-    let cardsContainer = section.querySelector('.osp-cards-container');
+    let cardsContainer = section.querySelector('.owp-cards-container');
     if (!cardsContainer) {
       section.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="font-weight:700;font-size:18px;">Watch Parties</div>
         </div>
-        <div class="osp-cards-container" style="display:flex;gap:16px;flex-wrap:wrap;"></div>
+        <div class="owp-cards-container" style="display:flex;gap:16px;flex-wrap:wrap;"></div>
       `;
-      cardsContainer = section.querySelector('.osp-cards-container');
+      cardsContainer = section.querySelector('.owp-cards-container');
     }
 
     // Build map of existing cards
     const existingCards = new Map();
-    cardsContainer.querySelectorAll('.osp-room-card').forEach(card => {
+    cardsContainer.querySelectorAll('.owp-room-card').forEach(card => {
       existingCards.set(card.dataset.roomId, card);
     });
 
@@ -169,7 +169,7 @@
         // Update count if changed
         if (existing.dataset.count !== String(room.count)) {
           existing.dataset.count = room.count;
-          const countEl = existing.querySelector('.osp-card-count');
+          const countEl = existing.querySelector('.owp-card-count');
           if (countEl) {
             countEl.textContent = `${room.count} participant${room.count > 1 ? 's' : ''}`;
           }
@@ -187,41 +187,41 @@
 
     if (!state.inRoom) {
       panel.innerHTML = `
-        <div class="osp-header"><span>OpenSyncParty</span> <span id="osp-ws-indicator"></span></div>
-        <div class="osp-lobby-container">
-            <div class="osp-section">
-              <div class="osp-label">Available Rooms</div>
-              <div id="osp-room-list"></div>
+        <div class="owp-header"><span>OpenWatchParty</span> <span id="owp-ws-indicator"></span></div>
+        <div class="owp-lobby-container">
+            <div class="owp-section">
+              <div class="owp-label">Available Rooms</div>
+              <div id="owp-room-list"></div>
             </div>
-            <div class="osp-section" style="border-top: 1px solid #333; padding-top: 15px;">
-              <div class="osp-label">Create a Room</div>
-              <input class="osp-input" id="osp-new-room-name" type="text" placeholder="e.g. Movie Night" />
-              <button class="osp-btn" style="width:100%" id="osp-btn-create">Create & Host</button>
+            <div class="owp-section" style="border-top: 1px solid #333; padding-top: 15px;">
+              <div class="owp-label">Create a Room</div>
+              <input class="owp-input" id="owp-new-room-name" type="text" placeholder="e.g. Movie Night" />
+              <button class="owp-btn" style="width:100%" id="owp-btn-create">Create & Host</button>
             </div>
         </div>
-        <div class="osp-footer">Connected to: ${host}:3000</div>
+        <div class="owp-footer">Connected to: ${host}:3000</div>
       `;
-      const btn = panel.querySelector('#osp-btn-create');
-      if (btn) btn.onclick = () => OSP.actions && OSP.actions.createRoom && OSP.actions.createRoom();
+      const btn = panel.querySelector('#owp-btn-create');
+      if (btn) btn.onclick = () => OWP.actions && OWP.actions.createRoom && OWP.actions.createRoom();
       updateRoomListUI();
     } else {
       panel.innerHTML = `
-        <div class="osp-header">
+        <div class="owp-header">
           <span style="color:#69f0ae">●</span>
           <span style="flex-grow:1; margin-left:8px;">${utils.escapeHtml(state.roomName)}</span>
-          <button class="osp-btn danger" id="osp-btn-leave">${state.isHost ? 'Close' : 'Leave'}</button>
+          <button class="owp-btn danger" id="owp-btn-leave">${state.isHost ? 'Close' : 'Leave'}</button>
         </div>
-        <div class="osp-section">
-          <div class="osp-label">Participants</div>
-          <div id="osp-participants-list" style="font-size:13px;">Online: ${state.participantCount || 1}</div>
+        <div class="owp-section">
+          <div class="owp-label">Participants</div>
+          <div id="owp-participants-list" style="font-size:13px;">Online: ${state.participantCount || 1}</div>
         </div>
-        <div class="osp-meta" style="font-size:10px; color:#666; display:flex; justify-content:space-between;">
-            <span>RTT: <span class="osp-latency">-</span></span>
+        <div class="owp-meta" style="font-size:10px; color:#666; display:flex; justify-content:space-between;">
+            <span>RTT: <span class="owp-latency">-</span></span>
             <span>ID: ${state.clientId.split('-')[1] || '...'}</span>
         </div>
       `;
-      const leaveBtn = panel.querySelector('#osp-btn-leave');
-      if (leaveBtn) leaveBtn.onclick = () => OSP.actions && OSP.actions.leaveRoom && OSP.actions.leaveRoom();
+      const leaveBtn = panel.querySelector('#owp-btn-leave');
+      if (leaveBtn) leaveBtn.onclick = () => OWP.actions && OWP.actions.leaveRoom && OWP.actions.leaveRoom();
     }
     updateStatusIndicator();
     renderHomeWatchParties();
@@ -257,7 +257,7 @@
     setTimeout(() => toast.remove(), 2000);
   };
 
-  OSP.ui = {
+  OWP.ui = {
     injectStyles,
     updateStatusIndicator,
     updateRoomListUI,

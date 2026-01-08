@@ -1,6 +1,6 @@
-# OpenSyncParty — Synchronized Watch Parties for Jellyfin
+# OpenWatchParty — Synchronized Watch Parties for Jellyfin
 
-OpenSyncParty is an open-source Jellyfin plugin that brings real-time watch-party functionality to your media server. It uses a lightweight Rust session server to coordinate synchronization between clients.
+OpenWatchParty is an open-source Jellyfin plugin that brings real-time watch-party functionality to your media server. It uses a lightweight Rust session server to coordinate synchronization between clients.
 
 ## Key Features
 
@@ -39,7 +39,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Project Structure
 
-* `plugins/jellyfin/OpenSyncParty`: Core C# plugin source code.
+* `plugins/jellyfin/OpenWatchParty`: Core C# plugin source code.
 * `clients/web-plugin`: JavaScript client-side logic.
 * `infra/docker`: Development stack configuration.
 * `scripts/`: Helper scripts for builds and environment management.

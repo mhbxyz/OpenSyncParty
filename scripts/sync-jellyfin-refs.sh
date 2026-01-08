@@ -3,7 +3,7 @@ set -euo pipefail
 
 CONTAINER=${1:-jellyfin-dev}
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-REFS_DIR="$ROOT_DIR/plugins/jellyfin/OpenSyncParty/refs"
+REFS_DIR="$ROOT_DIR/plugins/jellyfin/OpenWatchParty/refs"
 
 mkdir -p "$REFS_DIR"
 

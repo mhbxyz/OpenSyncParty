@@ -3,7 +3,7 @@ services:
     build:
       context: ../../session-server-rust
       dockerfile: Dockerfile
-    container_name: opensyncparty-session-server
+    container_name: openwatchparty-session-server
     ports:
       - "${SESSION_SERVER_PORT:-3000}:3000"
     restart: unless-stopped
@@ -19,8 +19,8 @@ services:
       - ./config:/config
       - jellyfin-cache:/cache
       - ${MEDIA_DIR:-${HOME}/Videos/Movies}:/media/Movies:ro
-      - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/opensyncparty:ro
-      - ../../plugins/jellyfin/OpenSyncParty/dist:/config/plugins/OpenSyncParty
+      - ../../clients/web-plugin:/jellyfin/jellyfin-web/plugins/openwatchparty:ro
+      - ../../plugins/jellyfin/OpenWatchParty/dist:/config/plugins/OpenWatchParty
     restart: unless-stopped
     entrypoint:
       - /bin/bash
@@ -36,12 +36,12 @@ services:
         cp /jellyfin/jellyfin-web/index.html.bak /jellyfin/jellyfin-web/index.html
 
         # Remove previous injections if any
-        sed -i 's|<script src="/OpenSyncParty/ClientScript[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
-        sed -i 's|<script src="/web/plugins/opensyncparty/plugin.js[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
+        sed -i 's|<script src="/OpenWatchParty/ClientScript[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
+        sed -i 's|<script src="/web/plugins/openwatchparty/plugin.js[^"]*"></script>||g' /jellyfin/jellyfin-web/index.html
         
         # Inject new version with cache buster
         TS=$$(date +%s)
-        sed -i "s|</body>|<script src=\"/web/plugins/opensyncparty/plugin.js?v=$$TS\"></script></body>|" /jellyfin/jellyfin-web/index.html
+        sed -i "s|</body>|<script src=\"/web/plugins/openwatchparty/plugin.js?v=$$TS\"></script></body>|" /jellyfin/jellyfin-web/index.html
         
         echo "Restored and injected index.html with v=$$TS"
         
@@ -54,9 +54,9 @@ services:
     profiles:
       - tools
     volumes:
-      - ../../plugins/jellyfin/OpenSyncParty:/src
-      - ../../plugins/jellyfin/OpenSyncParty/dist:/out
-    command: dotnet publish -c Release -o /out OpenSyncPartyPlugin.csproj /p:UseLocalJellyfinRefs=true
+      - ../../plugins/jellyfin/OpenWatchParty:/src
+      - ../../plugins/jellyfin/OpenWatchParty/dist:/out
+    command: dotnet publish -c Release -o /out OpenWatchPartyPlugin.csproj /p:UseLocalJellyfinRefs=true
 
 volumes:
   jellyfin-cache:

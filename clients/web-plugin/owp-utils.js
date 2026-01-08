@@ -1,9 +1,9 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.utils) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.utils) return;
 
-  const { SUPPRESS_MS, SYNC_LEAD_MS } = OSP.constants;
-  const state = OSP.state;
+  const { SUPPRESS_MS, SYNC_LEAD_MS } = OWP.constants;
+  const state = OWP.state;
 
   const nowMs = () => Date.now();
   const shouldSend = () => nowMs() > state.suppressUntil;
@@ -87,7 +87,7 @@
     return div.innerHTML;
   };
 
-  OSP.utils = {
+  OWP.utils = {
     nowMs,
     shouldSend,
     suppress,

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct Claims {
     pub sub: String,        // User ID
     pub name: String,       // Username
-    pub aud: String,        // Audience (should be "OpenSyncParty")
+    pub aud: String,        // Audience (should be "OpenWatchParty")
     pub iss: String,        // Issuer (should be "Jellyfin")
     pub exp: usize,         // Expiration time
     pub iat: usize,         // Issued at
@@ -30,7 +30,7 @@ impl JwtConfig {
 
         Self {
             secret,
-            audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "OpenSyncParty".to_string()),
+            audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "OpenWatchParty".to_string()),
             issuer: std::env::var("JWT_ISSUER").unwrap_or_else(|_| "Jellyfin".to_string()),
             enabled,
         }

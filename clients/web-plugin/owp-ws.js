@@ -1,11 +1,11 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.actions) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.actions) return;
 
-  const { DEFAULT_WS_URL, SEEK_THRESHOLD } = OSP.constants;
-  const state = OSP.state;
-  const utils = OSP.utils;
-  const ui = OSP.ui;
+  const { DEFAULT_WS_URL, SEEK_THRESHOLD } = OWP.constants;
+  const state = OWP.state;
+  const utils = OWP.utils;
+  const ui = OWP.ui;
 
   const send = (type, payload = {}, roomOverride = null) => {
     if (!state.ws || state.ws.readyState !== 1) return;
@@ -20,7 +20,7 @@
   };
 
   const createRoom = () => {
-    const nameInput = document.getElementById('osp-new-room-name');
+    const nameInput = document.getElementById('owp-new-room-name');
     const name = nameInput ? nameInput.value.trim() : '';
     if (!name) return;
     const v = utils.getVideo();
@@ -46,13 +46,13 @@
       // Get the Jellyfin API client
       const apiClient = window.ApiClient;
       if (!apiClient) {
-        console.warn('[OpenSyncParty] ApiClient not available, auth disabled');
+        console.warn('[OpenWatchParty] ApiClient not available, auth disabled');
         return null;
       }
 
       // Build the token URL
       const serverAddress = apiClient.serverAddress ? apiClient.serverAddress() : '';
-      const tokenUrl = `${serverAddress}/OpenSyncParty/Token`;
+      const tokenUrl = `${serverAddress}/OpenWatchParty/Token`;
 
       // Fetch with Jellyfin auth headers
       const response = await fetch(tokenUrl, {
@@ -63,7 +63,7 @@
       });
 
       if (!response.ok) {
-        console.warn('[OpenSyncParty] Failed to fetch auth token:', response.status);
+        console.warn('[OpenWatchParty] Failed to fetch auth token:', response.status);
         return null;
       }
 
@@ -74,14 +74,14 @@
 
       if (data.auth_enabled && data.token) {
         state.authToken = data.token;
-        console.log('[OpenSyncParty] Auth token obtained for user:', state.userName);
+        console.log('[OpenWatchParty] Auth token obtained for user:', state.userName);
         return data.token;
       }
 
-      console.log('[OpenSyncParty] Server auth disabled, connecting without token');
+      console.log('[OpenWatchParty] Server auth disabled, connecting without token');
       return null;
     } catch (err) {
-      console.warn('[OpenSyncParty] Error fetching auth token:', err);
+      console.warn('[OpenWatchParty] Error fetching auth token:', err);
       return null;
     }
   };
@@ -100,9 +100,9 @@
 
     // Security warning for non-secure WebSocket
     if (wsUrl.startsWith('ws://') && window.location.protocol === 'https:') {
-      console.warn('[OpenSyncParty] WARNING: Using insecure WebSocket (ws://) on HTTPS page. Data may be intercepted.');
+      console.warn('[OpenWatchParty] WARNING: Using insecure WebSocket (ws://) on HTTPS page. Data may be intercepted.');
     } else if (wsUrl.startsWith('ws://')) {
-      console.warn('[OpenSyncParty] Using insecure WebSocket (ws://). Consider using wss:// in production.');
+      console.warn('[OpenWatchParty] Using insecure WebSocket (ws://). Consider using wss:// in production.');
     }
 
     state.ws = new WebSocket(wsUrl);
@@ -120,7 +120,7 @@
 
   const handleMessage = (msg) => {
     const video = utils.getVideo();
-    console.log('[OpenSyncParty] Received:', msg.type, msg);
+    console.log('[OpenWatchParty] Received:', msg.type, msg);
 
     switch (msg.type) {
       case 'room_list':
@@ -169,9 +169,9 @@
           }
         }
         if (!state.isHost && msg.payload && msg.payload.media_id) {
-          if (OSP.playback && OSP.playback.ensurePlayback) {
-            OSP.playback.ensurePlayback(msg.payload.media_id);
-            if (OSP.playback.watchReady) OSP.playback.watchReady();
+          if (OWP.playback && OWP.playback.ensurePlayback) {
+            OWP.playback.ensurePlayback(msg.payload.media_id);
+            if (OWP.playback.watchReady) OWP.playback.watchReady();
           }
         }
         break;
@@ -179,7 +179,7 @@
       case 'participants_update':
         state.participantCount = msg.payload.participant_count;
         if (state.inRoom) {
-          const el = document.getElementById('osp-participants-list');
+          const el = document.getElementById('owp-participants-list');
           if (el) el.textContent = `Online: ${state.participantCount}`;
         }
         if (state.lastParticipantCount && state.participantCount > state.lastParticipantCount) {
@@ -261,7 +261,7 @@
         if (msg.payload && msg.payload.client_ts) {
           const now = utils.nowMs();
           const rtt = now - msg.payload.client_ts;
-          const latEl = document.querySelector('.osp-latency');
+          const latEl = document.querySelector('.owp-latency');
           if (latEl) latEl.textContent = `${rtt} ms`;
           if (typeof msg.server_ts === 'number' && rtt > 0) {
             const sampleOffset = msg.server_ts + (rtt / 2) - now;
@@ -275,7 +275,7 @@
     }
   };
 
-  OSP.actions = {
+  OWP.actions = {
     send,
     createRoom,
     joinRoom,

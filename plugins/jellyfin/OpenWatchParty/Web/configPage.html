@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>OpenSyncParty Configuration</title>
+    <title>OpenWatchParty Configuration</title>
 </head>
 <body>
     <div data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
         <div data-role="content">
             <div class="content-primary">
-                <form class="opensyncpartyConfigurationForm">
+                <form class="openwatchpartyConfigurationForm">
                     <div class="inputContainer">
                         <input is="emby-input" type="text" id="JwtSecret" label="JWT Secret" />
                         <div class="fieldDescription">Secret used to sign and verify session tokens.</div>
@@ -28,7 +28,7 @@
         </div>
 
         <script type="text/javascript">
-            var OpenSyncPartyConfigurationPage = {
+            var OpenWatchPartyConfigurationPage = {
                 pluginId: "0f2fd0fd-09ff-4f49-9f1c-4a8f421a4b7d"
             };
 
@@ -36,24 +36,24 @@
                 var page = this;
                 Dashboard.showLoadingMsg();
 
-                ApiClient.getPluginConfiguration(OpenSyncPartyConfigurationPage.pluginId).then(function (config) {
+                ApiClient.getPluginConfiguration(OpenWatchPartyConfigurationPage.pluginId).then(function (config) {
                     $('#JwtSecret', page).val(config.JwtSecret || '');
-                    $('#JwtAudience', page).val(config.JwtAudience || 'OpenSyncParty');
+                    $('#JwtAudience', page).val(config.JwtAudience || 'OpenWatchParty');
                     $('#JwtIssuer', page).val(config.JwtIssuer || 'Jellyfin');
                     Dashboard.hideLoadingMsg();
                 });
             });
 
-            $('.opensyncpartyConfigurationForm').on('submit', function () {
+            $('.openwatchpartyConfigurationForm').on('submit', function () {
                 Dashboard.showLoadingMsg();
                 var page = $(this).parents('.pluginConfigurationPage')[0];
 
-                ApiClient.getPluginConfiguration(OpenSyncPartyConfigurationPage.pluginId).then(function (config) {
+                ApiClient.getPluginConfiguration(OpenWatchPartyConfigurationPage.pluginId).then(function (config) {
                     config.JwtSecret = $('#JwtSecret', page).val();
                     config.JwtAudience = $('#JwtAudience', page).val();
                     config.JwtIssuer = $('#JwtIssuer', page).val();
 
-                    ApiClient.updatePluginConfiguration(OpenSyncPartyConfigurationPage.pluginId, config).then(Dashboard.processServerConfigurationUpdateResult);
+                    ApiClient.updatePluginConfiguration(OpenWatchPartyConfigurationPage.pluginId, config).then(Dashboard.processServerConfigurationUpdateResult);
                 });
 
                 return false;

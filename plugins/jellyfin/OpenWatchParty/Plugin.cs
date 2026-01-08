@@ -3,9 +3,9 @@ using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using Microsoft.Extensions.Logging;
-using OpenSyncParty.Plugin.Configuration;
+using OpenWatchParty.Plugin.Configuration;
 
-namespace OpenSyncParty.Plugin;
+namespace OpenWatchParty.Plugin;
 
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
@@ -20,26 +20,26 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 
         if (string.IsNullOrEmpty(Configuration.JwtSecret))
         {
-            _logger.LogWarning("[OpenSyncParty] JwtSecret is not configured. Authentication is DISABLED. " +
+            _logger.LogWarning("[OpenWatchParty] JwtSecret is not configured. Authentication is DISABLED. " +
                 "Set a JwtSecret (min 32 characters) in the plugin configuration to enable authentication.");
         }
         else if (Configuration.JwtSecret.Length < 32)
         {
-            _logger.LogWarning("[OpenSyncParty] JwtSecret is too short ({Length} chars). " +
+            _logger.LogWarning("[OpenWatchParty] JwtSecret is too short ({Length} chars). " +
                 "Use at least 32 characters for secure authentication.", Configuration.JwtSecret.Length);
         }
         else
         {
-            _logger.LogInformation("[OpenSyncParty] JWT authentication is enabled.");
+            _logger.LogInformation("[OpenWatchParty] JWT authentication is enabled.");
         }
     }
 
-    public override string Name => "OpenSyncParty";
+    public override string Name => "OpenWatchParty";
 
     public override Guid Id => new("0f2fd0fd-09ff-4f49-9f1c-4a8f421a4b7d");
     
     // Developer: https://github.com/mhbxyz
-    // Repository: https://github.com/mhbxyz/OpenSyncParty
+    // Repository: https://github.com/mhbxyz/OpenWatchParty
 
     public IEnumerable<PluginPageInfo> GetPages()
     {
@@ -47,7 +47,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         {
             new PluginPageInfo
             {
-                Name = "OpenSyncParty",
+                Name = "OpenWatchParty",
                 EmbeddedResourcePath = GetType().Namespace + ".Web.configPage.html"
             }
         };

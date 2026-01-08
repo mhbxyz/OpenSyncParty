@@ -1,6 +1,6 @@
 using MediaBrowser.Model.Plugins;
 
-namespace OpenSyncParty.Plugin.Configuration;
+namespace OpenWatchParty.Plugin.Configuration;
 
 public class PluginConfiguration : BasePluginConfiguration
 {
@@ -16,7 +16,7 @@ public class PluginConfiguration : BasePluginConfiguration
         set => _jwtSecret = value;
     }
 
-    public string JwtAudience { get; set; } = "OpenSyncParty";
+    public string JwtAudience { get; set; } = "OpenWatchParty";
     public string JwtIssuer { get; set; } = "Jellyfin";
     public int TokenTtlSeconds { get; set; } = 3600;
     public int InviteTtlSeconds { get; set; } = 3600;

@@ -4,20 +4,20 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using OpenSyncParty.Plugin.Configuration;
+using OpenWatchParty.Plugin.Configuration;
 
-namespace OpenSyncParty.Plugin.Controllers;
+namespace OpenWatchParty.Plugin.Controllers;
 
 [ApiController]
-[Route("OpenSyncParty")]
-public class OpenSyncPartyController : ControllerBase
+[Route("OpenWatchParty")]
+public class OpenWatchPartyController : ControllerBase
 {
     [HttpGet("ClientScript")]
     [Produces("text/javascript")]
     public ActionResult GetClientScript()
     {
-        var assembly = typeof(OpenSyncPartyController).Assembly;
-        var resourceName = "OpenSyncParty.Plugin.Web.plugin.js";
+        var assembly = typeof(OpenWatchPartyController).Assembly;
+        var resourceName = "OpenWatchParty.Plugin.Web.plugin.js";
         using var stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null) return NotFound();
         using var reader = new StreamReader(stream);

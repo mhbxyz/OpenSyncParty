@@ -1,6 +1,6 @@
 (() => {
-  const OSP = window.OpenSyncParty = window.OpenSyncParty || {};
-  if (OSP.state) return;
+  const OWP = window.OpenWatchParty = window.OpenWatchParty || {};
+  if (OWP.state) return;
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.hostname;
@@ -41,11 +41,11 @@
     }
   }
 
-  OSP.constants = {
-    PANEL_ID: 'osp-panel',
-    BTN_ID: 'osp-osd-btn',
-    STYLE_ID: 'osp-style',
-    HOME_SECTION_ID: 'osp-home-section',
+  OWP.constants = {
+    PANEL_ID: 'owp-panel',
+    BTN_ID: 'owp-osd-btn',
+    STYLE_ID: 'owp-style',
+    HOME_SECTION_ID: 'owp-home-section',
     protocol,
     host,
     DEFAULT_WS_URL: `${protocol}//${host}:3000/ws`,
@@ -65,7 +65,7 @@
     SYNC_LOOP_MS: 500             // Sync loop for playback rate correction
   };
 
-  OSP.state = {
+  OWP.state = {
     ws: null,
     roomId: '',
     clientId: '',

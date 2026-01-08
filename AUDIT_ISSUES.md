@@ -1,4 +1,4 @@
-# OpenSyncParty - Audit Issues Tracker
+# OpenWatchParty - Audit Issues Tracker
 
 > Audit réalisé le 2026-01-08
 >
@@ -128,7 +128,7 @@ let ws_route = warp::path("ws")
 ### S4 - JwtSecret vide par défaut
 - [x] **Corrigé** (2026-01-08)
 - **Priorité**: `P1` | **Effort**: `S`
-- **Fichiers**: `plugins/jellyfin/OpenSyncParty/Configuration/PluginConfiguration.cs`
+- **Fichiers**: `plugins/jellyfin/OpenWatchParty/Configuration/PluginConfiguration.cs`
 
 **Description**:
 Le secret JWT est une chaîne vide par défaut.

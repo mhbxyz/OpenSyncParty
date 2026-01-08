@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le client OpenSyncParty est un ensemble de modules JavaScript (IIFE) injectés dans l'interface web de Jellyfin. Ces modules gèrent la synchronisation de lecture entre plusieurs utilisateurs via WebSocket.
+Le client OpenWatchParty est un ensemble de modules JavaScript (IIFE) injectés dans l'interface web de Jellyfin. Ces modules gèrent la synchronisation de lecture entre plusieurs utilisateurs via WebSocket.
 
 ## Architecture des modules
 

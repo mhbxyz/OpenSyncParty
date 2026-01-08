@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-OpenSyncParty utilise un protocole JSON sur WebSocket pour la communication temps réel entre les clients et le serveur de session.
+OpenWatchParty utilise un protocole JSON sur WebSocket pour la communication temps réel entre les clients et le serveur de session.
 
 **Endpoint:** `ws(s)://<jellyfin-host>:3000/ws`
 

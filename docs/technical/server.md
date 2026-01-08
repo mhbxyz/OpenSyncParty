@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le serveur de session OpenSyncParty est une application Rust asynchrone utilisant Warp pour le WebSocket et Tokio comme runtime async. Il gère les rooms, les clients et la synchronisation de lecture en mémoire.
+Le serveur de session OpenWatchParty est une application Rust asynchrone utilisant Warp pour le WebSocket et Tokio comme runtime async. Il gère les rooms, les clients et la synchronisation de lecture en mémoire.
 
 ## Architecture des modules
 

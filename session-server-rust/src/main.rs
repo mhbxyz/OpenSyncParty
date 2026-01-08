@@ -120,7 +120,7 @@ async fn main() {
                 return Ok(auth::Claims {
                     sub: "anonymous".to_string(),
                     name: "Anonymous".to_string(),
-                    aud: "OpenSyncParty".to_string(),
+                    aud: "OpenWatchParty".to_string(),
                     iss: "Jellyfin".to_string(),
                     exp: 0,
                     iat: 0,
@@ -174,7 +174,7 @@ async fn main() {
 
     let routes = ws_route.or(health_route);
 
-    info!("OpenSyncParty server listening on 0.0.0.0:3000");
+    info!("OpenWatchParty server listening on 0.0.0.0:3000");
     warp::serve(routes).run(([0, 0, 0, 0], 3000)).await;
 }
 
