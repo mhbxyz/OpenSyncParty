@@ -274,52 +274,50 @@
       case 'player_event':
         if (state.isHost || !video) return;
         utils.startSyncing();
+
         if (msg.payload && typeof msg.payload.position === 'number') {
           const targetPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
           const serverNow = utils.getServerNow();
-          const msgDelay = serverNow - msg.server_ts;
           const gap = targetPos - video.currentTime;
+
           utils.log('CLIENT', {
             action: msg.payload.action,
             msg_pos: msg.payload.position,
             target_pos: targetPos,
             video_pos: video.currentTime,
-            gap,
-            msg_delay: msgDelay
+            gap
           });
-          // Seek if gap exceeds threshold
+
+          // Big seek: pause first to prevent playing stale content, then seek
           if (Math.abs(gap) > SEEK_THRESHOLD) {
+            video.pause();
             video.currentTime = targetPos;
-            // Update sync state to target position (we seeked there)
             state.lastSyncServerTs = serverNow;
             state.lastSyncPosition = targetPos;
           } else {
-            // No seek needed - update sync state with CLIENT's current position
-            // This prevents drift oscillation when host sends small seeks (e.g., HLS rebuffering)
+            // Small gap: just update sync state with client position
             state.lastSyncServerTs = serverNow;
             state.lastSyncPosition = video.currentTime;
           }
         }
+
         if (msg.payload) {
-          const targetServerTs = msg.payload.target_server_ts || msg.server_ts;
           if (msg.payload.action === 'play') {
             state.lastSyncPlayState = 'playing';
-            // Play immediately - don't wait for scheduled time
-            // The host is already playing, waiting would only increase drift
-            const expectedPos = utils.adjustedPosition(msg.payload.position, msg.server_ts);
-            if (Math.abs(video.currentTime - expectedPos) > SEEK_THRESHOLD) {
-              video.currentTime = expectedPos;
-              // Update sync state to match our seek - prevents drift chase after buffering
-              state.lastSyncServerTs = utils.getServerNow();
-              state.lastSyncPosition = expectedPos;
-            }
+            // Update sync state directly from message (no extra adjustedPosition)
+            state.lastSyncServerTs = msg.server_ts;
+            state.lastSyncPosition = msg.payload.position;
+            // Play immediately - syncLoop handles drift via playback rate adjustment
             video.play().catch(() => {});
+
           } else if (msg.payload.action === 'pause') {
             state.lastSyncPlayState = 'paused';
-            utils.scheduleAt(targetServerTs, () => video.pause());
-          } else if (msg.payload.action === 'seek' && typeof msg.payload.position === 'number') {
-            // Seek action is already handled above with position check
-            // Only update play state here if needed
+            // Pause immediately, no scheduling delay
+            video.pause();
+
+          } else if (msg.payload.action === 'seek') {
+            // Seek position was handled above, mark as paused until play event
+            state.lastSyncPlayState = 'paused';
           }
         }
         break;

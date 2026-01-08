@@ -54,10 +54,10 @@
     STATE_UPDATE_MS: 2000,        // Increased from 1000ms - less aggressive state updates
     SYNC_LEAD_MS: 300,            // Compensates processing + initial HLS buffer
     DRIFT_DEADZONE_SEC: 0.04,
-    DRIFT_SOFT_MAX_SEC: 8.0,      // Only seek beyond 8s drift
-    PLAYBACK_RATE_MIN: 0.90,      // Allow slowdown if ahead
-    PLAYBACK_RATE_MAX: 1.20,      // More aggressive catch-up (imperceptible with pitch correction)
-    DRIFT_GAIN: 0.15,             // For sqrt curve: 0.15 * sqrt(2s) ≈ 0.21 → 1.21x
+    DRIFT_SOFT_MAX_SEC: 2.0,      // Seek to correct if drift > 2s
+    PLAYBACK_RATE_MIN: 0.85,      // Allow slowdown if ahead
+    PLAYBACK_RATE_MAX: 1.30,      // Aggressive catch-up (pitch correction helps)
+    DRIFT_GAIN: 0.20,             // For sqrt curve: 0.20 * sqrt(1s) = 0.20 → 1.20x at 1s drift
     // Interval timings (P2 optimization)
     UI_CHECK_MS: 2000,            // UI button injection check
     PING_MS: 10000,               // Ping interval (increased from 3s)
