@@ -15,7 +15,7 @@ plugins/jellyfin/OpenWatchParty/Web/plugin.js
 plugins/jellyfin/OpenWatchParty/Web/owp-*.js
 
 # Rust build artifacts
-session-server-rust/target/
+server/target/
 
 # OS
 .DS_Store

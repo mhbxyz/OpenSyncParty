@@ -67,7 +67,7 @@ Implémenter une authentification par message après connexion WebSocket :
 | **ID** | C02 |
 | **Sévérité** | 🔴 Critique |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/auth.rs` |
+| **Fichier** | `server/src/auth.rs` |
 | **Ligne** | 52-60 |
 | **Statut** | ✅ Résolu |
 | **Assigné** | - |
@@ -166,7 +166,7 @@ $('#JwtSecret', page).val(config.JwtSecret || '');
 | **ID** | H01 |
 | **Sévérité** | 🟠 Haute |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/main.rs` |
+| **Fichier** | `server/src/main.rs` |
 | **Ligne** | 29-34 |
 | **Statut** | ✅ Résolu |
 
@@ -199,7 +199,7 @@ fn is_origin_allowed(origin: &str, allowed: &[String]) -> bool {
 | **ID** | H02 |
 | **Sévérité** | 🟠 Haute |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 178-195 |
 | **Statut** | ✅ Résolu |
 
@@ -535,7 +535,7 @@ Désactiver ou changer le label si déjà membre.
 | **ID** | M-UX06 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 272-318 |
 | **Statut** | ⬜ Non résolu |
 
@@ -622,7 +622,7 @@ RTT affiché uniquement dans le panneau, pas visible pendant la lecture.
 | **ID** | M-P01 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/messaging.rs` |
+| **Fichier** | `server/src/messaging.rs` |
 | **Ligne** | 24-32 |
 | **Statut** | ⬜ Non résolu |
 
@@ -634,7 +634,7 @@ RTT affiché uniquement dans le panneau, pas visible pendant la lecture.
 | **ID** | M-P02 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 274-317 |
 | **Statut** | ⬜ Non résolu |
 
@@ -646,7 +646,7 @@ RTT affiché uniquement dans le panneau, pas visible pendant la lecture.
 | **ID** | M-P03 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 254 |
 | **Statut** | ⬜ Non résolu |
 
@@ -760,7 +760,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | M-P12 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/messaging.rs` |
+| **Fichier** | `server/src/messaging.rs` |
 | **Ligne** | 36, 42 |
 | **Statut** | ⬜ Non résolu |
 
@@ -806,7 +806,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | M-Q01 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 12-17, 23-28 |
 | **Statut** | ⬜ Non résolu |
 
@@ -828,7 +828,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | M-Q03 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/messaging.rs` |
+| **Fichier** | `server/src/messaging.rs` |
 | **Ligne** | 36, 42 |
 | **Statut** | ⬜ Non résolu |
 
@@ -840,7 +840,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | M-Q04 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/messaging.rs` |
+| **Fichier** | `server/src/messaging.rs` |
 | **Statut** | ⬜ Non résolu |
 
 ---
@@ -994,7 +994,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | M-Q18 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/main.rs` |
+| **Fichier** | `server/src/main.rs` |
 | **Statut** | ⬜ Non résolu |
 
 ---
@@ -1027,7 +1027,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | B01 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 320-332 |
 | **Statut** | ⬜ Non résolu |
 
@@ -1039,7 +1039,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | B02 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/main.rs` |
+| **Fichier** | `server/src/main.rs` |
 | **Ligne** | 56-78 |
 | **Statut** | ⬜ Non résolu |
 
@@ -1051,7 +1051,7 @@ Utiliser requestAnimationFrame ou event-driven.
 | **ID** | B03 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/room.rs` |
+| **Fichier** | `server/src/room.rs` |
 | **Ligne** | 51-56 |
 | **Statut** | ⬜ Non résolu |
 
@@ -1138,7 +1138,7 @@ Le message `room_closed` est créé comme string JSON brute au lieu d'un `WsMess
 | **ID** | B10 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 111-144 |
 | **Statut** | ⬜ Non résolu |
 
@@ -1162,7 +1162,7 @@ Le message `room_closed` est créé comme string JSON brute au lieu d'un `WsMess
 | **ID** | B12 |
 | **Sévérité** | 🟡 Moyenne |
 | **Composant** | Rust Server |
-| **Fichier** | `session-server-rust/src/ws.rs` |
+| **Fichier** | `server/src/ws.rs` |
 | **Ligne** | 295 |
 | **Statut** | ⬜ Non résolu |
 

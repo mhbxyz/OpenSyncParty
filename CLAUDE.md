@@ -10,7 +10,7 @@ OpenWatchParty is a Jellyfin plugin that enables synchronized watch parties. It 
    - Serves client JS, generates JWT tokens, provides configuration UI
    - Target: .NET 9.0, Jellyfin 10.11.x
 
-2. **Session Server (Rust)** - `session-server-rust/`
+2. **Session Server (Rust)** - `server/`
    - WebSocket server managing rooms and sync state
    - Uses warp, tokio, handles JWT validation
 
@@ -80,3 +80,4 @@ JWT_SECRET=               # Enable auth (empty = disabled)
 ## Commit Rules
 
 - **No AI signatures**: Do not add `Co-Authored-By: Claude` or similar AI attribution lines in commits
+- **Update documentation**: After making code changes, update relevant documentation in `docs/` if the changes affect user-facing behavior, configuration options, APIs, or architecture

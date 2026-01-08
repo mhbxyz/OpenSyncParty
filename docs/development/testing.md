@@ -9,7 +9,7 @@ OpenWatchParty uses a combination of automated tests and manual testing procedur
 ### Rust Session Server
 
 ```bash
-cd session-server-rust
+cd server
 
 # Run all tests
 cargo test
@@ -244,7 +244,7 @@ jobs:
         with:
           toolchain: stable
       - run: cargo test
-        working-directory: session-server-rust
+        working-directory: server
 
   test-csharp:
     runs-on: ubuntu-latest
@@ -293,8 +293,8 @@ wscat -c ws://localhost:3000/ws
 
 | Component | Location |
 |-----------|----------|
-| Rust | `session-server-rust/src/*.rs` (inline) |
-| Rust integration | `session-server-rust/tests/` |
+| Rust | `server/src/*.rs` (inline) |
+| Rust integration | `server/tests/` |
 | C# | `plugins/jellyfin/OpenWatchParty.Tests/` |
 
 ### Test Naming

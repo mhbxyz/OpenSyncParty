@@ -54,7 +54,7 @@ This starts:
 
 ```bash
 # Build the image
-docker build -t openwatchparty-session-server ./session-server-rust
+docker build -t openwatchparty-session-server ./server
 
 # Run the container
 docker run -d \
@@ -70,7 +70,7 @@ Requirements:
 - Rust 1.70+
 
 ```bash
-cd session-server-rust
+cd server
 cargo build --release
 ./target/release/session-server
 ```

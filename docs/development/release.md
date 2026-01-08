@@ -75,7 +75,7 @@ make build
 
 ```bash
 # Rust session server
-cd session-server-rust
+cd server
 cargo build --release
 
 # C# plugin
@@ -87,7 +87,7 @@ dotnet build -c Release
 
 | Component | Output Location |
 |-----------|-----------------|
-| Session Server | `session-server-rust/target/release/session-server` |
+| Session Server | `server/target/release/session-server` |
 | Plugin DLL | `plugins/jellyfin/OpenWatchParty/bin/Release/net9.0/OpenWatchParty.dll` |
 
 ## Release Steps
@@ -160,7 +160,7 @@ git branch -d release/v0.2.0
 
 ```bash
 # Session server
-docker build -t openwatchparty-session-server:0.2.0 ./session-server-rust
+docker build -t openwatchparty-session-server:0.2.0 ./server
 
 # Tag as latest
 docker tag openwatchparty-session-server:0.2.0 openwatchparty-session-server:latest
@@ -194,13 +194,13 @@ jobs:
 
       - name: Build
         run: cargo build --release
-        working-directory: session-server-rust
+        working-directory: server
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: session-server-linux
-          path: session-server-rust/target/release/session-server
+          path: server/target/release/session-server
 
   build-plugin:
     runs-on: ubuntu-latest

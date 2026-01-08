@@ -1,5 +1,5 @@
 [package]
-name = "session-server-rust"
+name = "session-server"
 version = "0.1.0"
 edition = "2021"
 

@@ -70,7 +70,7 @@ OpenWatchParty/
 │           ├── Configuration/
 │           └── Web/         # Bundled JS (copied from clients/)
 │
-├── session-server-rust/     # Rust WebSocket server
+├── server/     # Rust WebSocket server
 │   ├── src/
 │   │   ├── main.rs
 │   │   ├── types.rs
@@ -123,7 +123,7 @@ OpenWatchParty/
 
 ### Rust Session Server
 
-1. **Edit files** in `session-server-rust/src/`
+1. **Edit files** in `server/src/`
 2. **Restart server**:
    ```bash
    docker compose -f infra/docker/docker-compose.yml restart session-server
@@ -166,7 +166,7 @@ docker compose -f infra/docker/docker-compose.yml restart session-server
 
 For faster iteration, run locally:
 ```bash
-cd session-server-rust
+cd server
 cargo watch -x run
 ```
 
@@ -274,7 +274,7 @@ wscat -c ws://localhost:3000/ws
 
 **Rust:**
 ```bash
-cd session-server-rust
+cd server
 cargo clean
 cargo build
 ```

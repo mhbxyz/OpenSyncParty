@@ -196,7 +196,7 @@ Before submitting:
 
 ```bash
 # Rust tests
-cd session-server-rust
+cd server
 cargo test
 
 # C# tests (when available)

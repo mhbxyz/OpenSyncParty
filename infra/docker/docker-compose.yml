@@ -1,7 +1,7 @@
 services:
   session-server:
     build:
-      context: ../../session-server-rust
+      context: ../../server
       dockerfile: Dockerfile
     container_name: openwatchparty-session-server
     ports:
